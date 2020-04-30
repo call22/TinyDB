@@ -21,3 +21,22 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+target/classes/rpc.thrift
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/ConnectReq.java
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/ConnectResp.java
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/DisconnetReq.java
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/DisconnetResp.java
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/ExecuteStatementReq.java
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/ExecuteStatementResp.java
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/GetTimeReq.java
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/GetTimeResp.java
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/IService.java
+target/generated-sources/thrift/cn/edu/thssdb/rpc/thrift/Status.java
+target/maven-archiver/pom.properties
+target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst
+target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst
+target/surefire-reports/cn.edu.thssdb.index.BPlusTreeTest.txt
+target/surefire-reports/TEST-cn.edu.thssdb.index.BPlusTreeTest.xml
+target/tools/thrift_0.12.0_0.13.0_mac.exe
