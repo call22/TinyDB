@@ -5,6 +5,8 @@ import cn.edu.thssdb.type.ColumnType;
 import javafx.util.Pair;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,6 +60,8 @@ public class Table implements Iterable<Row> {
     }
     else if (isMultiPrimaryKey) {
       // TODO: 根据多主键映射函数，修改max-length
+      // end
+
       // 多主键会映射为string
       Column tmpPrimaryColumn = new Column("IDX", ColumnType.STRING, 1, true, 32);
       this.columns.add(0, tmpPrimaryColumn);
@@ -71,7 +75,6 @@ public class Table implements Iterable<Row> {
     dataFile = new RandomAccessFile(dataFileName, "rw");
 
     // TODO: 初始化空闲列表？
-
     // end
 
     // 创建索引文件
@@ -79,7 +82,6 @@ public class Table implements Iterable<Row> {
     indexFile = new RandomAccessFile(indexFileName, "rw");
 
     // TODO: 存储索引树，如何？
-
     // end
   }
 
@@ -87,8 +89,37 @@ public class Table implements Iterable<Row> {
     // TODO
   }
 
-  public void insert() {
-    // TODO
+  /**
+   * 插入单行数据
+   *
+   * @param row 待插入的行
+   * @throws IOException
+   */
+  public void insert(Row row) throws IOException {
+    // TODO: 判断是否有NOT_NULL约束
+    // end
+
+    // TODO: 判断主键是否重复
+    // end
+
+    // 写入单行数据
+    if(freeListPtr == -1) {
+      dataFile.seek((dataFile.length()));
+    }
+    else {
+      dataFile.seek(freeListPtr);
+      long nextPtr = dataFile.readLong();
+      dataFile.seek((freeListPtr));
+      freeListPtr = nextPtr;
+    }
+    // TODO: row要存储position吗？
+    // end
+    dataFile.write(serialize(row));
+
+    // TODO: 插入至索引
+    // 插入至索引
+
+    // end
   }
 
   public void delete() {
@@ -99,8 +130,12 @@ public class Table implements Iterable<Row> {
     // TODO
   }
 
-  private void serialize() {
-    // TODO
+  private final byte[] serialize(Row row) throws IOException {
+    // 计算row需要的bytes
+    int totalSize = 0;
+    for (Column column : columns) {
+      totalSize += c
+    }
   }
 
   private ArrayList<Row> deserialize() {
