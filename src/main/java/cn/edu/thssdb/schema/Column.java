@@ -25,6 +25,9 @@ public class Column implements Comparable<Column> {
   public String toString() {
     return name + ',' + type + ',' + primary + ',' + notNull + ',' + maxLength;
   }
+  public String getName() {
+    return this.name;
+  }
 
   public boolean isPrimary() {
     if(primary == 1) {
