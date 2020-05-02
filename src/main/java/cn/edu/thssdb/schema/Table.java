@@ -102,6 +102,17 @@ public class Table implements Iterable<Row> {
     // TODO
   }
 
+
+  /**
+   * 获取一行数据
+   *
+   * @param entry 主键值
+   * @return
+   */
+  public Row search(Entry entry) {
+    return index.get(entry);
+  }
+
   /**
    * 插入一行数据
    *
