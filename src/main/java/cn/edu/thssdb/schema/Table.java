@@ -1,10 +1,12 @@
 package cn.edu.thssdb.schema;
 
 import cn.edu.thssdb.index.BPlusTree;
+import cn.edu.thssdb.type.ByteManager;
 import cn.edu.thssdb.type.ColumnType;
 import javafx.util.Pair;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -15,7 +17,7 @@ public class Table implements Iterable<Row> {
   private String databaseName;
   public String tableName;
   public ArrayList<Column> columns;
-  public BPlusTree<Entry, Integer> index;
+  public BPlusTree<Entry, Long> index;
   private int primaryIndex = 0;
   private ArrayList<Integer> primaryIndexList;
 
@@ -79,7 +81,7 @@ public class Table implements Iterable<Row> {
     // 构建索引树，若文件存有数据，则反序列化读取
     index = new BPlusTree<>();
     String indexFileName = databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION;
-    RandomAccessFile indexFile = new RandomAccessFile(indexFileName, "r");
+    RandomAccessFile indexFile = new RandomAccessFile(indexFileName, "rw");
     if (indexFile.length() > 0) {
       try {
         deserialize(indexFileName);
@@ -95,19 +97,28 @@ public class Table implements Iterable<Row> {
   }
 
   /**
-   * 插入单行数据
+   * 插入一行数据
    *
    * @param row 待插入的行
    * @throws IOException
    */
   public void insert(Row row) throws IOException {
-    // TODO: 判断是否有NOT_NULL约束
+    // TODO: 判断是否有NOT_NULL约束, 且是否满足
     // end
 
     // TODO: 判断主键是否重复
     // end
 
-    // 写入单行数据
+    // 若无主键 或 多主键 在IDX列插入索引值
+    if (!hasPrimaryKey) {
+      row.getEntries().add(0, new Entry(uniqueID));
+      uniqueID++;
+    }
+    else if (isMultiPrimaryKey) {
+      // TODO: 插入多键时，映射函数后的索引值
+    }
+
+    // 写入单行数据, 若空闲列表非空，插入至空闲位置，否则插入至文件末尾
     if(freeListPtr == -1) {
       dataFile.seek((dataFile.length()));
     }
@@ -117,31 +128,102 @@ public class Table implements Iterable<Row> {
       dataFile.seek((freeListPtr));
       freeListPtr = nextPtr;
     }
-    // TODO: row要存储position吗？
-    // end
-    dataFile.write(serialize(row));
+    Long indexStartPtr = dataFile.getFilePointer();
+    ByteManager byteManager = new ByteManager();
+    byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)];
+    Arrays.fill(bytes, (byte) 0);
+    ByteBuffer buf = ByteBuffer.wrap(bytes);
+    ArrayList<Entry> entries = row.getEntries();
+    int i = 0;
+    for (Entry entry : entries) {
+      buf.put( (byte) (entry.value == null ? 1 : 0) );
+      buf.put(byteManager.entryToBytes(entry, columns.get(i)));
+      i++;
+    }
+    dataFile.write(bytes);
 
-    // TODO: 插入至索引
-    // 插入至索引
-
-    // end
+    // 更新索引
+    index.put(entries.get(primaryIndex), indexStartPtr);
+    // 更新文件头
+    writeDataFileHeader();
   }
 
-  public void delete() {
-    // TODO
+  /**
+   * 查询一行数据
+   *
+   * @param entry 待查询的主键entry
+   * @return 查询到的Row元组
+   * @throws IOException
+   */
+  public Row search(Entry entry) throws IOException{
+    Long position = index.get(entry);
+    // 定位到文件指定位置
+    dataFile.seek(position);
+    // 读取原生bytes
+    ByteManager byteManager = new ByteManager();
+    byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)];
+    dataFile.read(bytes);
+    // 从bytes转换为row
+    ByteBuffer buf = ByteBuffer.wrap(bytes);
+    Entry[] entries = new Entry[columns.size()];
+    int i = 0;
+    for (Column column : columns) {
+      // 获取是否为空信息 与 entry的byte信息
+      byte isNull = buf.get();
+      byte[] entryByteValue = new byte[byteManager.getColumnTypeByteSize(column)];
+      buf.get(entryByteValue);
+      if (isNull == 1) {
+        entries[i] = null;
+      }
+      else {
+        entries[i] = byteManager.bytesToEntry(entryByteValue, column);
+      }
+      i++;
+    }
+    return new Row(entries);
   }
 
-  public void update() {
-    // TODO
+  /**
+   * 删除一行数据
+   *
+   * @param entry 待删除的主键entry
+   * @throws IOException
+   */
+  public void delete(Entry entry) throws IOException {
+    Long position = index.get(entry);
+    // 先删除索引
+    index.remove(entry);
+    // 把数据文件覆盖为空闲列表指针
+    dataFile.seek(position);
+    dataFile.writeLong(freeListPtr);
+    freeListPtr = position;
+    // 修改文件头
+    writeDataFileHeader();
   }
 
-  private void serialize() throws IOException {
+  /**
+   * 更新一行数据
+   *
+   * @param row 新的元组
+   * @throws IOException
+   */
+  public void update(Row row) throws IOException{
+    delete(row.getEntries().get(primaryIndex));
+    insert(row);
+  }
+
+  /**
+   * 序列化索引树
+   *
+   * @throws IOException
+   */
+  public void serialize() throws IOException {
     String indexFileName = databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION;
-    RandomAccessFile indexFile = new RandomAccessFile(indexFileName, "w");
+    RandomAccessFile indexFile = new RandomAccessFile(indexFileName, "rw");
     FileOutputStream fileOut = new FileOutputStream(indexFileName);
     ObjectOutputStream oos = new ObjectOutputStream(fileOut);
-    ArrayList<Pair<Entry, Integer>> leafArrayList = new ArrayList<>();
-    for (Pair<Entry, Integer> leaf : index) {
+    ArrayList<Pair<Entry, Long>> leafArrayList = new ArrayList<>();
+    for (Pair<Entry, Long> leaf : index) {
       leafArrayList.add(leaf);
     }
     oos.writeObject(leafArrayList);
@@ -150,13 +232,20 @@ public class Table implements Iterable<Row> {
     indexFile.close();
   }
 
-  private void deserialize(String indexFileName) throws IOException, ClassNotFoundException {
+  /**
+   * 反序列化索引树
+   *
+   * @param indexFileName 索引树所在文件名
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  public void deserialize(String indexFileName) throws IOException, ClassNotFoundException {
     // 从文件读取所有叶子节点
     FileInputStream fileIn = new FileInputStream(indexFileName);
     ObjectInputStream ois = new ObjectInputStream(fileIn);
-    ArrayList<Pair<Entry, Integer>> leafArrayList = (ArrayList<Pair<Entry, Integer>>) ois.readObject();
+    ArrayList<Pair<Entry, Long>> leafArrayList = (ArrayList<Pair<Entry, Long>>) ois.readObject();
     // 恢复索引树
-    for (Pair<Entry, Integer> leaf : leafArrayList) {
+    for (Pair<Entry, Long> leaf : leafArrayList) {
       index.put(leaf.getKey(), leaf.getValue());
     }
     ois.close();
@@ -185,16 +274,16 @@ public class Table implements Iterable<Row> {
     dataFile.writeInt(uniqueID);
   }
 
-  private Row getRowFromFile(int position) throws IOException {
-    return new Row();
-  }
-
-
+  /**
+   * 表迭代器，遍历索引树的索引值，读取文件中row的数据
+   */
   private class TableIterator implements Iterator<Row> {
-    private final Iterator<Pair<Entry, Integer>> iterator;
+    private final Iterator<Pair<Entry, Long>> iterator;
+    private Table table;
 
     TableIterator(Table table) {
       this.iterator = table.index.iterator();
+      this.table = table;
     }
 
     @Override
@@ -204,13 +293,13 @@ public class Table implements Iterable<Row> {
 
     @Override
     public Row next() {
-      Row row = null;
       try {
-        row = getRowFromFile(iterator.next().getValue());
+        return table.search(iterator.next().getKey());
       } catch (IOException e) {
         e.printStackTrace();
+        System.exit(0);
       }
-      return row;
+      return null;
     }
   }
 

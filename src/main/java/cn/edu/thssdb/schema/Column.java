@@ -28,6 +28,12 @@ public class Column implements Comparable<Column> {
   public String getName() {
     return this.name;
   }
+  public ColumnType getType() {
+    return this.type;
+  }
+  public int getMaxLength() {
+    return this.maxLength;
+  }
 
   public boolean isPrimary() {
     if(primary == 1) {
