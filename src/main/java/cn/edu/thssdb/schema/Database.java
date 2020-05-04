@@ -1,33 +1,155 @@
 package cn.edu.thssdb.schema;
 
+import cn.edu.thssdb.exception.DuplicateKeyException;
+import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.query.QueryResult;
 import cn.edu.thssdb.query.QueryTable;
+import cn.edu.thssdb.type.ColumnType;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Database {
+  private static final String SCHEMA_EXTENSION = ".meta";
 
   private String name;
   private HashMap<String, Table> tables;
   ReentrantReadWriteLock lock;
 
-  public Database(String name) {
+  public Table[] getTables(){
+    Table[] tableList= new Table[tables.size()];
+    int i=0;
+    for(Table t: tables.values()){
+      tableList[i]=t;
+      i++;
+    }
+    return tableList;
+  }
+
+  public String getName(){return name;}
+
+  /**
+   * 根据数据库名称，创建、或从.meta文件恢复数据库
+   *
+   * @param name 待创建的数据库的名字
+   * @throws IOException 读取文件失败
+   */
+
+  public Database(String name) throws IOException {
     this.name = name;
     this.tables = new HashMap<>();
     this.lock = new ReentrantReadWriteLock();
     recover();
   }
 
-  private void persist() {
-    // TODO
+  /**
+   * 将数据库信息（名字|表数量|表信息）持久化到.meta文件中
+   *
+   * @throws IOException 写入文件失败
+   */
+
+  private void persist() throws IOException {
+    String filename = name + SCHEMA_EXTENSION;
+    FileOutputStream fos = new FileOutputStream(filename);
+    DataOutputStream dos = new DataOutputStream(fos);
+    dos.writeInt(tables.size());
+    for(Table table : tables.values()){
+      dos.writeInt(toSchemaBytes(table).length);
+      dos.write(toSchemaBytes(table));
+    }
+    fos.close();
+    dos.close();
   }
 
-  public void create(String name, Column[] columns) {
-    // TODO
+  /**
+   * 将某个表的信息（表名|列信息）转化成可写入.meta文件的二进制格式
+   *
+   * @param table 待转化的表
+   * @return 转化得的二进制串
+   */
+
+  private byte[] toSchemaBytes(Table table) {
+    ByteBuffer buffer = ByteBuffer.allocate(1024);
+    // buffer.put("TABLE".getBytes()); // Magic Number
+    buffer.putInt(table.tableName.length());
+    buffer.put(table.tableName.getBytes());
+    // buffer.putInt(uniqueID);
+    buffer.putInt(table.columns.size());
+    for (Column column : table.columns) {
+      buffer.putInt(column.getType().ordinal());
+      buffer.putInt(column.getName().length());
+      buffer.put(column.getName().getBytes());
+      buffer.putInt(column.isPrimary()?1:0);
+      buffer.putInt(column.getNull());
+
+      buffer.putInt(column.getMaxLength());
+    }
+    return buffer.array();
   }
 
-  public void drop() {
-    // TODO
+
+
+  /**
+   * 创建新的表
+   *
+   * @param name 新的表名
+   * @param columns 新的表所包含的列
+   * @return
+   * @throws IOException 将新表信息写入文件时出错
+   */
+
+  public void create(String name, Column[] columns) throws IOException {
+    if(!tables.containsKey(name)){
+      Table newTabel= new Table(this.name,name,columns);
+      tables.put(newTabel.tableName,newTabel);
+      persist();
+
+    }else{
+      throw new DuplicateKeyException();
+
+    }
+  }
+
+  /**
+   * 删除某个表
+   *
+   * @param tableName 待删除的表名
+   * @return
+   * @throws IOException 更新信息写入文件时出错
+   */
+
+  public void drop(String tableName) throws IOException {
+    if(tables.containsKey(tableName)){
+      Table table=tables.get(tableName);
+      table.drop();
+
+      tables.remove(tableName);
+      persist();
+
+    }else{
+      throw new KeyNotExistException();
+    }
+  }
+
+  /**
+   * 修改表的结构（列信息）
+   *
+   * @param tablename 待修改的表名
+   * @param newColumns 修改后表所包含的列
+   * @return
+   * @throws IOException 将新表信息写入文件时出错
+   */
+  public void editTable(String tablename,Column[] newColumns) throws IOException {
+    if(tables.containsKey(tablename)){
+      drop(tablename);
+      create(tablename,newColumns);
+
+    }else {
+      throw new KeyNotExistException();
+    }
   }
 
   public String select(QueryTable[] queryTables) {
@@ -36,11 +158,103 @@ public class Database {
     return null;
   }
 
-  private void recover() {
-    // TODO
+  /**
+   * 从.meta恢复数据库信息
+   *
+   * @throws IOException 读文件时出错
+   */
+  private void recover() throws IOException {
+    String filename = name + SCHEMA_EXTENSION;
+    if(new File(filename).exists()){
+      FileInputStream fis = new FileInputStream(filename);
+      DataInputStream dis = new DataInputStream(fis);
+      int tableNum = dis.readInt();
+      for(int i=0;i<tableNum;i++){
+        int tableSchemaLength=dis.readInt();
+        byte[] tableSchema = new byte[tableSchemaLength];
+        dis.read(tableSchema);
+        Table t= TableFromSchema(tableSchema);
+        tables.put(t.tableName,t);
+      }
+    }else{
+      File metaFile = new File(filename);
+      persist();
+    }
   }
 
-  public void quit() {
-    // TODO
+  /**
+   * 从.meta文件中读取到的二进制串恢复表信息
+   *
+   * @param tableSchema 包含了表信息的二进制串
+   * @return 恢复得到的表
+   * @throws IOException 写入文件时出错
+   */
+  private Table TableFromSchema(byte[] tableSchema) throws IOException {
+    ByteBuffer buffer = ByteBuffer.wrap(tableSchema);
+    int tableNameSize = buffer.getInt();
+    byte[] byteName = new byte[tableNameSize];
+    buffer.get(byteName);
+    String tableName = new String(byteName);
+    // int uniqueID = buffer.getInt();
+    int columnSize = buffer.getInt();
+    Column[] columns = new Column[columnSize];
+    for (int i = 0; i < columnSize; i++) {
+      ColumnType type=ColumnType.INT;
+
+      int t=buffer.getInt();
+      switch (t){
+        case 0:
+          type=ColumnType.INT;
+          break;
+        case 1:
+          type=ColumnType.LONG;
+          break;
+        case 2:
+          type=ColumnType.FLOAT;
+          break;
+        case 3:
+          type=ColumnType.DOUBLE;
+          break;
+        case 4:
+          type=ColumnType.STRING;
+          break;
+
+      }
+      int nameSize = buffer.getInt();
+      byte[] columnName = new byte[nameSize];
+      buffer.get(columnName);
+      int primary = buffer.getInt();
+      boolean notnull= buffer.getInt()==1?true:false;
+      int maxlength = buffer.getInt();
+      columns[i] = new Column(new String(columnName),type,primary,notnull,maxlength);
+    }
+
+    Table resultT=new Table(name,tableName,columns);
+    return resultT;
   }
+
+  /**
+   * 退出该数据库
+   *
+   * @return
+   * @throws IOException 将数据库信息写入文件时出错
+   */
+  public void quit() throws IOException {
+    persist();
+  }
+
+  /**
+   * 删除数据库（自身），包括删除包含的表、及相关的文件
+   *
+   * @return
+   * @throws IOException 删除文件时出错
+   */
+  public void dropSelf() throws IOException {
+    for(Table t :tables.values()){
+      t.drop();
+    }
+    File deletedFile= new File(name+SCHEMA_EXTENSION);
+    deletedFile.delete();
+  }
+
 }

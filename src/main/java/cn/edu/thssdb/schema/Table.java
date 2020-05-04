@@ -92,6 +92,10 @@ public class Table implements Iterable<Row> {
     indexFile.close();
   }
 
+  public ArrayList<Column> getColumns() {
+    return columns;
+  }
+
   private void recover() {
     // TODO
   }
@@ -230,6 +234,19 @@ public class Table implements Iterable<Row> {
     oos.close();
     fileOut.close();
     indexFile.close();
+  }
+
+  /**
+   * 删除这个表对应的文件
+   *
+   * @throws IOException
+   */
+  public void drop() throws IOException {
+    dataFile.close();;
+    File dFile= new File(databaseName + "_" + tableName + DATA_EXTENSION);
+    dFile.delete();
+    File idxFile= new File( databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION);
+    idxFile.delete();
   }
 
   /**
