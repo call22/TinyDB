@@ -152,5 +152,21 @@ public class ByteManager {
         return column.getMaxLength();
     }
   }
+  public int getTypeByteSize(ColumnType column) {
+    int default_len=20;
+    switch (column) {
+      case INT:
+        return Integer.BYTES;
+      case FLOAT:
+        return Float.BYTES;
+      case LONG:
+        return Long.BYTES;
+      case DOUBLE:
+        return Double.BYTES;
+      default:
+        return default_len;
+    }
+  }
+
 }
 

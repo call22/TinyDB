@@ -11,6 +11,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class SchemaTest {
+    Column[] columns1 = {
+            new Column("id", ColumnType.INT, 1, true, 0),
+            new Column("name", ColumnType.STRING, 0, true, 16)
+    };
+    Column[] columns2 = {
+            new Column("name", ColumnType.STRING, 1, true, 0),
+            new Column("salary", ColumnType.INT, 0, true, 16)
+    };
 
 
     @Test
@@ -20,11 +28,15 @@ public class SchemaTest {
         Manager m=new Manager();
         printDB(m);
         //创建数据库
-        System.out.print("————————————————创建数据库——————————————————\n");
+        System.out.print("————————————————创建数据库并为当前数据库创建表——————————————————\n");
 
         m.createDatabaseIfNotExists("database1");
         m.createDatabaseIfNotExists("database2");
         m.createDatabaseIfNotExists("database3");
+        Database curDB=m.getCurrentDB();
+        curDB.create("table1",columns1);
+        curDB.create("table2",columns2);
+
 
         printDB(m);
         //切换数据库
@@ -35,27 +47,10 @@ public class SchemaTest {
         //创建表格
         System.out.print("————————————————为当前数据库创建表格——————————————————\n");
 
-        Column[] columns1 = {
-                new Column("id", ColumnType.INT, 1, true, 0),
-                new Column("name", ColumnType.STRING, 0, true, 16)
-        };
-        Column[] columns2 = {
-                new Column("name", ColumnType.STRING, 1, true, 0),
-                new Column("salary", ColumnType.INT, 0, true, 16)
-        };
 
-        Database curDB=m.getCurrentDB();
+        curDB=m.getCurrentDB();
         curDB.create("table1",columns1);
         curDB.create("table2",columns2);
-        printDB(m);
-        System.out.print("————————————————为当前数据库修改表格——————————————————\n");
-        Column[] columns3 = {
-                new Column("id", ColumnType.INT, 1, true, 0),
-                new Column("name", ColumnType.STRING, 0, true, 16),
-                new Column("dept_name", ColumnType.STRING, 0, true, 16)
-
-        };
-        curDB.editTable("table1",columns3);
         printDB(m);
 
         System.out.print("————————————————为当前数据库删除表格——————————————————\n");
@@ -67,9 +62,9 @@ public class SchemaTest {
         System.out.print("————————————————删除数据库（当前）——————————————————\n");
         m.deleteDatabase("database1");
         printDB(m);
-
-
-
+        System.out.print("————————————————从当前文件建立重建整体数据库系统如下（应与上一阶段完全一致,当前数据库默认为TEST）——————————————————\n");
+        Manager n =new Manager() ;
+        printDB(n);
     }
 
     private void printDB(Manager manager) {

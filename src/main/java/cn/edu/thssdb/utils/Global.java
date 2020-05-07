@@ -2,6 +2,7 @@ package cn.edu.thssdb.utils;
 
 public class Global {
   public static int fanout = 129;
+  public static String dirPath="DBS//";
 
   public static int SUCCESS_CODE = 0;
   public static int FAILURE_CODE = -1;

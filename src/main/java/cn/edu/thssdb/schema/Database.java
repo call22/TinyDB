@@ -5,6 +5,7 @@ import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.query.QueryResult;
 import cn.edu.thssdb.query.QueryTable;
 import cn.edu.thssdb.type.ColumnType;
+import cn.edu.thssdb.utils.Global;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -52,7 +53,7 @@ public class Database {
    */
 
   private void persist() throws IOException {
-    String filename = name + SCHEMA_EXTENSION;
+    String filename = Global.dirPath+name+"/"+name + SCHEMA_EXTENSION;
     FileOutputStream fos = new FileOutputStream(filename);
     DataOutputStream dos = new DataOutputStream(fos);
     dos.writeInt(tables.size());
@@ -135,22 +136,30 @@ public class Database {
   }
 
   /**
-   * 修改表的结构（列信息）
+   * 删除tablename中的column
    *
    * @param tablename 待修改的表名
-   * @param newColumns 修改后表所包含的列
+   * @param column 待删除的列
    * @return
    * @throws IOException 将新表信息写入文件时出错
    */
-  public void editTable(String tablename,Column[] newColumns) throws IOException {
-    if(tables.containsKey(tablename)){
-      drop(tablename);
-      create(tablename,newColumns);
+  public void alterTableDrop(String tablename,Column column) throws IOException {
 
-    }else {
-      throw new KeyNotExistException();
-    }
+
+
   }
+  /**
+   * 向tablename添加column
+   *
+   * @param tablename 待修改的表名
+   * @param column 待添加的列、
+   * @param
+   * @return
+   * @throws IOException 将新表信息写入文件时出错
+   */
+  public void alterTableAdd(String tablename,Column column,ColumnType type) throws IOException {
+  }
+
 
   public String select(QueryTable[] queryTables) {
     // TODO
@@ -164,7 +173,12 @@ public class Database {
    * @throws IOException 读文件时出错
    */
   private void recover() throws IOException {
-    String filename = name + SCHEMA_EXTENSION;
+    String fileDir=Global.dirPath+name;
+    if(!new File(fileDir).exists()){
+      File FileDir=new File(fileDir);
+      FileDir.mkdirs();
+    }
+    String filename = fileDir+"/"+name + SCHEMA_EXTENSION;
     if(new File(filename).exists()){
       FileInputStream fis = new FileInputStream(filename);
       DataInputStream dis = new DataInputStream(fis);
@@ -253,7 +267,12 @@ public class Database {
     for(Table t :tables.values()){
       t.drop();
     }
-    File deletedFile= new File(name+SCHEMA_EXTENSION);
+    String filpath = Global.dirPath+"/"+name;
+    String metaFile=filpath+"/"+name+SCHEMA_EXTENSION;
+    File deletedMeta=new File(metaFile);
+    deletedMeta.delete();
+
+    File deletedFile= new File(filpath);
     deletedFile.delete();
   }
 

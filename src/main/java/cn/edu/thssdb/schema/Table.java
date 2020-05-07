@@ -1,10 +1,13 @@
 package cn.edu.thssdb.schema;
 
+import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.index.BPlusTree;
 import cn.edu.thssdb.type.ByteManager;
 import cn.edu.thssdb.type.ColumnType;
+import cn.edu.thssdb.utils.Global;
 import javafx.util.Pair;
 
+import javax.management.openmbean.KeyAlreadyExistsException;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -34,6 +37,12 @@ public class Table implements Iterable<Row> {
     this.tableName = tableName;
     this.columns = new ArrayList<>(Arrays.asList(columns));
     primaryIndexList = new ArrayList<>();
+    String tablePath= Global.dirPath+databaseName+"/"+tableName;
+    if(!new File(tablePath).exists()){
+      File Tabledir=new File(tablePath);
+      Tabledir.mkdirs();
+    }
+
 
     // 遍历判断是否含有主键及个数
     int primaryKeyCount = 0;
@@ -69,7 +78,9 @@ public class Table implements Iterable<Row> {
 
     // 创建或读取数据文件
     String dataFileName = databaseName + "_" + tableName + DATA_EXTENSION;
-    dataFile = new RandomAccessFile(dataFileName, "rw");
+    String filePath= Global.dirPath+databaseName+"/"+tableName+"/"+dataFileName;
+
+    dataFile = new RandomAccessFile(filePath, "rw");
     // 初始化空闲列表和uniqueID - 若文件为空，就写入初始值 | 若非空，就读取
     if (dataFile.length() > Long.BYTES + Integer.BYTES) {
       readDataFileHeader();
@@ -81,10 +92,11 @@ public class Table implements Iterable<Row> {
     // 构建索引树，若文件存有数据，则反序列化读取
     index = new BPlusTree<>();
     String indexFileName = databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION;
-    RandomAccessFile indexFile = new RandomAccessFile(indexFileName, "rw");
+
+    RandomAccessFile indexFile = new RandomAccessFile(tablePath+"/"+indexFileName, "rw");
     if (indexFile.length() > 0) {
       try {
-        deserialize(indexFileName);
+        deserialize(tablePath+"/"+indexFileName);
       } catch (ClassNotFoundException e) {
         e.printStackTrace();
       }
@@ -223,8 +235,10 @@ public class Table implements Iterable<Row> {
    */
   public void serialize() throws IOException {
     String indexFileName = databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION;
-    RandomAccessFile indexFile = new RandomAccessFile(indexFileName, "rw");
-    FileOutputStream fileOut = new FileOutputStream(indexFileName);
+    String idxfilePath= Global.dirPath+databaseName+"/"+tableName+"/"+indexFileName;
+
+    RandomAccessFile indexFile = new RandomAccessFile(idxfilePath, "rw");
+    FileOutputStream fileOut = new FileOutputStream(idxfilePath);
     ObjectOutputStream oos = new ObjectOutputStream(fileOut);
     ArrayList<Pair<Entry, Long>> leafArrayList = new ArrayList<>();
     for (Pair<Entry, Long> leaf : index) {
@@ -243,10 +257,20 @@ public class Table implements Iterable<Row> {
    */
   public void drop() throws IOException {
     dataFile.close();;
-    File dFile= new File(databaseName + "_" + tableName + DATA_EXTENSION);
+    String tablePath=Global.dirPath+databaseName+"/"+tableName;
+    File tableDir=new File(tablePath);
+    String dataFileName = databaseName + "_" + tableName + DATA_EXTENSION;
+    String datafilePath=tablePath+"/"+dataFileName;
+
+    File dFile= new File(datafilePath);
     dFile.delete();
-    File idxFile= new File( databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION);
+    String idxFileName = databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION;
+    String idxfilePath= tablePath+"/"+idxFileName;
+
+    File idxFile= new File( idxfilePath);
     idxFile.delete();
+    tableDir.delete();
+
   }
 
   /**

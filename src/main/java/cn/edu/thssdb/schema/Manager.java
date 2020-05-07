@@ -3,7 +3,7 @@ import cn.edu.thssdb.exception.DuplicateKeyException;
 import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.exception.*;
 
-import cn.edu.thssdb.exception.*;
+import cn.edu.thssdb.utils.Global;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -14,6 +14,7 @@ public class Manager {
   private HashMap<String, Database> databases;
   private static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   String currentDB;
+
   private static final String SCHEMA_FILE="schema";
   private static final String DEFAULT_DBNAME="TEST";
 
@@ -24,13 +25,19 @@ public class Manager {
    */
   public Manager() throws IOException {
     databases = new HashMap<>();
-    if(!new File(SCHEMA_FILE).exists()){
-      File schema = new File(SCHEMA_FILE);
-      FileOutputStream fos= new FileOutputStream(SCHEMA_FILE);
+
+    String filename=Global.dirPath+SCHEMA_FILE;
+
+    if(!new File(filename).exists()){
+      File DBS=new File(Global.dirPath);
+      DBS.mkdirs();
+      File schema = new File(filename);
+      //schema.mkdirs();
+      FileOutputStream fos= new FileOutputStream(filename);
       DataOutputStream dos = new DataOutputStream(fos);
       dos.writeInt(0);
     }
-    FileInputStream fis = new FileInputStream(SCHEMA_FILE);
+    FileInputStream fis = new FileInputStream(filename);
     if(fis!=null){
       DataInputStream dis = new DataInputStream(fis);
       int databaseNum= dis.readInt();
@@ -109,7 +116,7 @@ public class Manager {
           Database defaultdb=new Database(DEFAULT_DBNAME);
           databases.put(DEFAULT_DBNAME,defaultdb);
           currentDB=DEFAULT_DBNAME;
-          updateSchema();
+//          updateSchema();
         }
       }
       updateSchema();
@@ -136,7 +143,9 @@ public class Manager {
    * @throws KeyNotExistException 此名字的数据库不存在
    */
   private void updateSchema() throws IOException {
-    FileOutputStream outputStream = new FileOutputStream(SCHEMA_FILE);
+    String filename=Global.dirPath+SCHEMA_FILE;
+
+    FileOutputStream outputStream = new FileOutputStream(filename);
     DataOutputStream out = new DataOutputStream(outputStream);
     out.writeInt(databases.size());
     for (Database dataBase : databases.values()) {
