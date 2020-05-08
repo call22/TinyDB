@@ -5,6 +5,7 @@ import cn.edu.thssdb.schema.Entry;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * 处理各种Byte数据
@@ -28,6 +29,11 @@ public class ByteManager {
   }
 
   public byte[] entryToBytes(Entry entry, Column column) {
+    if(entry==null){
+      byte[] bytes=new byte[getColumnTypeByteSize(column)];
+      Arrays.fill(bytes, (byte) 0);
+      return bytes;
+    }
     switch (column.getType()) {
       case INT:
         return intToBytes((Integer) entry.value);

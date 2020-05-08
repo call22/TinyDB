@@ -5,6 +5,7 @@ import cn.edu.thssdb.index.BPlusTree;
 import cn.edu.thssdb.type.ByteManager;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.Global;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import javafx.util.Pair;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
@@ -103,7 +104,7 @@ public class Table implements Iterable<Row> {
     }
     indexFile.close();
   }
-
+  public RandomAccessFile getRAF(){return dataFile;}
   public ArrayList<Column> getColumns() {
     return columns;
   }
@@ -152,7 +153,7 @@ public class Table implements Iterable<Row> {
     ArrayList<Entry> entries = row.getEntries();
     int i = 0;
     for (Entry entry : entries) {
-      buf.put( (byte) (entry.value == null ? 1 : 0) );
+      buf.put( (byte) (entry==null||entry.value == null ? 1 : 0) );
       buf.put(byteManager.entryToBytes(entry, columns.get(i)));
       i++;
     }
@@ -348,4 +349,149 @@ public class Table implements Iterable<Row> {
   public Iterator<Row> iterator() {
     return new TableIterator(this);
   }
+
+
+  /**
+   * 添加列
+   *
+   * @param columnName 添加的列名(暂不支持添加primary,新添加的列默认notPrimary,canbeNull,maxlength=对应类型的长度)
+   * @param type 添加的类型
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  public void alterADD(String columnName,ColumnType type) throws IOException {
+    //已存在这一列
+    for(Column c :getColumns()){
+      if(c.getName().equals(columnName)){
+        throw new KeyAlreadyExistsException();
+      }
+    }
+    ByteManager byteManager=new ByteManager();
+
+    String tablePath=Global.dirPath+File.separator+databaseName+File.separator+tableName;
+    String newfilename="temp.data";
+    String oldfilename=databaseName + "_" + tableName + DATA_EXTENSION;
+    freeListPtr=-1;
+    File newDataFile=new File(tablePath+File.separator+newfilename);
+    RandomAccessFile newAccess=new RandomAccessFile(tablePath+File.separator+newfilename,"rw");
+    newAccess.writeLong(-1);
+    newAccess.writeInt(uniqueID);
+    for (Pair<Entry, Long> leaf : index) {
+      long ptr=newAccess.getFilePointer();
+
+      byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)+1+byteManager.getTypeByteSize(type)];
+      Arrays.fill(bytes, (byte) 0);
+      ByteBuffer buf = ByteBuffer.wrap(bytes);
+      byte[] oldbytes = new byte[columns.size() + byteManager.columnsByteSize(columns)];
+      dataFile.seek(leaf.getValue());
+      dataFile.read(oldbytes);
+
+      buf.put(oldbytes);
+      buf.put((byte)1);//null
+      for(int k=0;k<byteManager.getTypeByteSize(type);k++){
+        buf.put((byte)0);
+      }
+      newAccess.write(bytes);
+      // 更新索引
+      index.update(leaf.getKey(), ptr);
+    }
+    freeListPtr=-1;
+    Column newColumn =new Column(columnName,type,0,false,byteManager.getTypeByteSize(type));
+    columns.add(newColumn);
+    newAccess.close();;
+    dataFile.close();;
+    dataFile=newAccess;
+
+    File oldFile=new File(tablePath+File.separator+oldfilename);
+    System.gc();
+    boolean deleted=oldFile.delete();
+    File newDFile=new File(tablePath+File.separator+oldfilename);
+    boolean rename=newDataFile.renameTo(newDFile);
+    if(deleted){
+      System.out.print("删除成功\n");
+    }else{
+      System.out.print("删除失败\n");
+    }
+    if(rename){
+      System.out.print("重命名成功\n");
+      serialize();
+      dataFile=new RandomAccessFile(tablePath+File.separator+oldfilename,"rw");
+    }else{
+      System.out.print("重命名错误\n");
+    }
+  }
+
+  /**
+   * 删除列
+   *
+   * @param columnName 删除的列名(暂不支持删除primary)
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  public void alterDrop(String columnName) throws IOException {
+    //没有这一列或者这一列为主键
+    boolean flag=false;
+    for(Column c :getColumns()){
+      if(c.getName().equals(columnName)){
+        flag=!c.isPrimary();
+      }
+    }
+    if(!flag){
+      throw new KeyNotExistException();
+    }
+
+    ByteManager byteManager=new ByteManager();
+    Column deletedColumn = null;
+    int idx=0;
+    for(Column c:columns){
+
+      if(c.getName().equals(columnName)){
+        deletedColumn=c;
+        break;
+      }
+      idx++;
+    }
+
+    String tablePath=Global.dirPath+File.separator+databaseName+File.separator+tableName;
+    String newfilename="temp.data";
+    String oldfilename=databaseName + "_" + tableName + DATA_EXTENSION;
+    freeListPtr=-1;
+    File newDataFile=new File(tablePath+File.separator+newfilename);
+    RandomAccessFile newAccess=new RandomAccessFile(tablePath+File.separator+newfilename,"rw");
+    newAccess.writeLong(-1);
+    newAccess.writeInt(uniqueID);
+    for(Row r:this){
+
+      long ptr=newAccess.getFilePointer();
+      byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)-1-byteManager.getColumnTypeByteSize(deletedColumn)];
+      Arrays.fill(bytes, (byte) 0);
+      ByteBuffer buf = ByteBuffer.wrap(bytes);
+      ArrayList<Entry> entries = r.getEntries();
+      int i = 0;
+      for (Entry entry : entries) {
+        if(i!=idx){
+          buf.put( (byte) (entry==null||entry.value == null ? 1 : 0) );
+          buf.put(byteManager.entryToBytes(entry, columns.get(i)));
+        }
+        i++;
+      }
+      newAccess.write(bytes);
+
+      // 更新索引
+      index.update(entries.get(primaryIndex), ptr);
+    }
+    freeListPtr=-1;
+    columns.remove(deletedColumn);
+    newAccess.close();;
+    dataFile.close();;
+    File oldFile=new File(tablePath+File.separator+oldfilename);
+    System.gc();
+    oldFile.delete();
+    File newDFile=new File(tablePath+File.separator+oldfilename);
+    newDataFile.renameTo(newDFile);
+    serialize();
+    dataFile=new RandomAccessFile(tablePath+File.separator+oldfilename,"rw");
+  }
 }
+
+

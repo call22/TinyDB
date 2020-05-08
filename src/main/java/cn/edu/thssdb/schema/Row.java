@@ -29,8 +29,15 @@ public class Row implements Serializable {
     if (entries == null)
       return "EMPTY";
     StringJoiner sj = new StringJoiner(", ");
-    for (Entry e : entries)
-      sj.add(e.toString());
+    for (Entry e : entries){
+      if(e==null){
+        sj.add("null");
+      }else{
+        sj.add(e.toString());
+
+      }
+
+    }
     return sj.toString();
   }
 }

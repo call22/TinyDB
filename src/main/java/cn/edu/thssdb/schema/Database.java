@@ -143,8 +143,15 @@ public class Database {
    * @return
    * @throws IOException 将新表信息写入文件时出错
    */
-  public void alterTableDrop(String tablename,Column column) throws IOException {
+  public void alterTableDrop(String tablename,String column) throws IOException {
+    //存在此table
+    Table t=tables.get(tablename);
+    if(t==null){
+      throw new KeyNotExistException();
+    }
 
+    t.alterDrop(column);
+    persist();
 
 
   }
@@ -157,7 +164,14 @@ public class Database {
    * @return
    * @throws IOException 将新表信息写入文件时出错
    */
-  public void alterTableAdd(String tablename,Column column,ColumnType type) throws IOException {
+  public void alterTableAdd(String tablename,String column,ColumnType type) throws IOException {
+    Table t=tables.get(tablename);
+    //存在此table
+    if(t==null){
+      throw new KeyNotExistException();
+    }
+    t.alterADD(column,type);
+    persist();
   }
 
 

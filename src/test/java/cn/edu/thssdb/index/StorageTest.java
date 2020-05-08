@@ -32,7 +32,28 @@ public class StorageTest {
     testUpdate();
     testSearch();
     testTable.serialize();
+    testTable.getRAF().close();;//为测试alter暂时添加。重建Table需要先关闭原有文件流，否则后续alter时文件会删除出错
     testRestore();
+
+    testAlterAdd();
+    testAlterDrop();
+    System.out.println("测试修改数据，更新id=3的age为25: ");
+    Entry[] entries = {new Entry(3), new Entry(25)};
+    testTable.update(new Row(entries));
+    printTestTable();
+
+  }
+  public void testAlterAdd() throws IOException {
+    // 测试alterADD(age)：
+    System.out.println("测试alterADD(age):");
+    testTable.alterADD("age",ColumnType.INT);
+    printTestTable();
+  }
+  public void testAlterDrop() throws IOException {
+    // 测试alterADD(age)：
+    System.out.println("测试alterDROP(name):");
+    testTable.alterDrop("name");
+    printTestTable();
   }
 
   public void testSearch() throws IOException{
@@ -63,6 +84,9 @@ public class StorageTest {
   }
 
   public void printTestTable() {
+    for(Column c:testTable.getColumns()){
+      System.out.print(c.toString()+"\n");
+    }
     for (Row row : testTable) {
       System.out.print(row.toString() + '\n');
     }

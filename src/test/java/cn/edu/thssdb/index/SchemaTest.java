@@ -1,9 +1,6 @@
 package cn.edu.thssdb.index;
 
-import cn.edu.thssdb.schema.Column;
-import cn.edu.thssdb.schema.Database;
-import cn.edu.thssdb.schema.Manager;
-import cn.edu.thssdb.schema.Table;
+import cn.edu.thssdb.schema.*;
 import cn.edu.thssdb.type.ColumnType;
 import org.junit.Test;
 
@@ -36,9 +33,8 @@ public class SchemaTest {
         Database curDB=m.getCurrentDB();
         curDB.create("table1",columns1);
         curDB.create("table2",columns2);
-
-
         printDB(m);
+
         //切换数据库
         System.out.print("————————————————切换数据库——————————————————\n");
 
@@ -47,22 +43,48 @@ public class SchemaTest {
         //创建表格
         System.out.print("————————————————为当前数据库创建表格——————————————————\n");
 
-
         curDB=m.getCurrentDB();
         curDB.create("table1",columns1);
         curDB.create("table2",columns2);
+        Table testTable = null;
+        for(Table t:curDB.getTables()){
+            if(t.tableName.equals("table1")){
+                testTable=t;
+            }
+        }
+        for (int i = 0; i < 5; i++) {
+            Entry[] entries = {new Entry(i),new Entry("XiaoLi")};
+            testTable.insert(new Row(entries));
+        }
+        testTable.serialize();
         printDB(m);
+        System.out.print("此时的table1:\n");
+        printTestTable(testTable);
 
         System.out.print("————————————————为当前数据库删除表格——————————————————\n");
-        curDB.drop("table1");
+        curDB.drop("table2");
         printDB(m);
+        System.out.print("————————————————为当前table1添加age(INT)列——————————————————\n");
+        curDB.alterTableAdd("table1","age",ColumnType.INT);
+        printDB(m);
+        System.out.print("此时的table1:\n");
+        printTestTable(testTable);
+
+        System.out.print("————————————————为当前table1删除name列——————————————————\n");
+        curDB.alterTableDrop("table1","name");
+        printDB(m);
+        System.out.print("此时的table1:\n");
+        printTestTable(testTable);
+
+
+
         System.out.print("————————————————删除数据库（非当前数据库）——————————————————\n");
         m.deleteDatabase("database3");
         printDB(m);
         System.out.print("————————————————删除数据库（当前）——————————————————\n");
         m.deleteDatabase("database1");
         printDB(m);
-        System.out.print("————————————————从当前文件建立重建整体数据库系统如下（应与上一阶段完全一致,当前数据库默认为TEST）——————————————————\n");
+        System.out.print("————————————————从当前文件建立重建整体数据库系统如下（应与上一阶段完全一致,当前数据库默认为第一个dataBase）——————————————————\n");
         Manager n =new Manager() ;
         printDB(n);
     }
@@ -88,5 +110,14 @@ public class SchemaTest {
         System.out.print("当前数据库:"+manager.getCurrentDB().getName()+'\n');
 
     }
+    public void printTestTable(Table testTable) {
+        for(Column c:testTable.getColumns()){
+            System.out.print(c.toString()+"\n");
+        }
+        for (Row row : testTable) {
+            System.out.print(row.toString() + '\n');
+        }
+    }
+
 
 }
