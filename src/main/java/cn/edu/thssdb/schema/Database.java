@@ -151,26 +151,27 @@ public class Database {
     }
 
     t.alterDrop(column);
-    persist();
+    //persist();
 
 
   }
+
   /**
    * 向tablename添加column
    *
    * @param tablename 待修改的表名
-   * @param column 待添加的列、
+   * @param column 待添加的列
    * @param
    * @return
    * @throws IOException 将新表信息写入文件时出错
    */
-  public void alterTableAdd(String tablename,String column,ColumnType type) throws IOException {
+  public void alterTableAdd(String tablename,Column column) throws IOException {
     Table t=tables.get(tablename);
     //存在此table
     if(t==null){
       throw new KeyNotExistException();
     }
-    t.alterADD(column,type);
+    t.alterADD(column);
     persist();
   }
 
@@ -268,6 +269,10 @@ public class Database {
    * @throws IOException 将数据库信息写入文件时出错
    */
   public void quit() throws IOException {
+    for(Table t:tables.values()){
+      t.getRAF().close();;
+      t.serialize();
+    }
     persist();
   }
 

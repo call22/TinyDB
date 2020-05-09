@@ -65,7 +65,9 @@ public class SchemaTest {
         curDB.drop("table2");
         printDB(m);
         System.out.print("————————————————为当前table1添加age(INT)列——————————————————\n");
-        curDB.alterTableAdd("table1","age",ColumnType.INT);
+        //curDB.alterTableAdd("table1","age",ColumnType.INT);
+        curDB.alterTableAdd("table1",new Column("age",ColumnType.INT,0,false,0));
+
         printDB(m);
         System.out.print("此时的table1:\n");
         printTestTable(testTable);
@@ -85,6 +87,7 @@ public class SchemaTest {
         m.deleteDatabase("database1");
         printDB(m);
         System.out.print("————————————————从当前文件建立重建整体数据库系统如下（应与上一阶段完全一致,当前数据库默认为第一个dataBase）——————————————————\n");
+        m.quit();
         Manager n =new Manager() ;
         printDB(n);
     }

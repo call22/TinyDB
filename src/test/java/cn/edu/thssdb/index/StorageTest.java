@@ -46,13 +46,16 @@ public class StorageTest {
   public void testAlterAdd() throws IOException {
     // 测试alterADD(age)：
     System.out.println("测试alterADD(age):");
-    testTable.alterADD("age",ColumnType.INT);
+    testTable.alterADD(new Column("age",ColumnType.INT,0,false,0));
+
+    //testTable.alterADD("age",ColumnType.INT);
     printTestTable();
   }
   public void testAlterDrop() throws IOException {
     // 测试alterADD(age)：
     System.out.println("测试alterDROP(name):");
     testTable.alterDrop("name");
+
     printTestTable();
   }
 

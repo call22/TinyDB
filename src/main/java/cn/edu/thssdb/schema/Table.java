@@ -354,17 +354,14 @@ public class Table implements Iterable<Row> {
   /**
    * 添加列
    *
-   * @param columnName 添加的列名(暂不支持添加primary,新添加的列默认notPrimary,canbeNull,maxlength=对应类型的长度)
-   * @param type 添加的类型
+   * @param column 添加的列
    * @throws IOException
    * @throws ClassNotFoundException
    */
-  public void alterADD(String columnName,ColumnType type) throws IOException {
+  public void alterADD(Column column) throws IOException {
     //已存在这一列
-    for(Column c :getColumns()){
-      if(c.getName().equals(columnName)){
-        throw new KeyAlreadyExistsException();
-      }
+    if(columns.contains(column)){
+      throw new KeyAlreadyExistsException();
     }
     ByteManager byteManager=new ByteManager();
 
@@ -379,7 +376,7 @@ public class Table implements Iterable<Row> {
     for (Pair<Entry, Long> leaf : index) {
       long ptr=newAccess.getFilePointer();
 
-      byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)+1+byteManager.getTypeByteSize(type)];
+      byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)+1+byteManager.getColumnTypeByteSize(column)];
       Arrays.fill(bytes, (byte) 0);
       ByteBuffer buf = ByteBuffer.wrap(bytes);
       byte[] oldbytes = new byte[columns.size() + byteManager.columnsByteSize(columns)];
@@ -388,7 +385,7 @@ public class Table implements Iterable<Row> {
 
       buf.put(oldbytes);
       buf.put((byte)1);//null
-      for(int k=0;k<byteManager.getTypeByteSize(type);k++){
+      for(int k=0;k<byteManager.getColumnTypeByteSize(column);k++){
         buf.put((byte)0);
       }
       newAccess.write(bytes);
@@ -396,10 +393,9 @@ public class Table implements Iterable<Row> {
       index.update(leaf.getKey(), ptr);
     }
     freeListPtr=-1;
-    Column newColumn =new Column(columnName,type,0,false,byteManager.getTypeByteSize(type));
-    columns.add(newColumn);
-    newAccess.close();;
-    dataFile.close();;
+    columns.add(column);
+    newAccess.close();
+    dataFile.close();
     dataFile=newAccess;
 
     File oldFile=new File(tablePath+File.separator+oldfilename);
@@ -414,7 +410,7 @@ public class Table implements Iterable<Row> {
     }
     if(rename){
       System.out.print("重命名成功\n");
-      serialize();
+      //serialize();
       dataFile=new RandomAccessFile(tablePath+File.separator+oldfilename,"rw");
     }else{
       System.out.print("重命名错误\n");
@@ -489,9 +485,11 @@ public class Table implements Iterable<Row> {
     oldFile.delete();
     File newDFile=new File(tablePath+File.separator+oldfilename);
     newDataFile.renameTo(newDFile);
-    serialize();
+    //serialize();
     dataFile=new RandomAccessFile(tablePath+File.separator+oldfilename,"rw");
   }
+
+
 }
 
 

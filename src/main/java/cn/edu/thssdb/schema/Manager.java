@@ -88,7 +88,7 @@ public class Manager {
     if(!databases.containsKey(dbname)){
       Database newdb=new Database(dbname);
       databases.put(dbname,newdb);
-      updateSchema();
+      //updateSchema();
 
     }else{
       throw new DuplicateKeyException();
@@ -119,7 +119,7 @@ public class Manager {
 //          updateSchema();
         }
       }
-      updateSchema();
+      //updateSchema();
     }else {
       throw new KeyNotExistException();
     }
@@ -130,8 +130,9 @@ public class Manager {
    * @param dbName 切换到的数据库名
    * @throws KeyNotExistException 此名字的数据库不存在
    */
-  public void switchDatabase(String dbName) {
+  public void switchDatabase(String dbName) throws IOException {
     if(databases.containsKey(dbName)){
+      databases.get(currentDB).quit();
       currentDB=dbName;
     }else{
       throw new KeyNotExistException();
@@ -156,6 +157,12 @@ public class Manager {
     outputStream.close();
   }
 
+  public void quit() throws IOException {
+    for(Database d:databases.values()){
+      d.quit();
+    }
+    updateSchema();
+  }
 
 
   /**
