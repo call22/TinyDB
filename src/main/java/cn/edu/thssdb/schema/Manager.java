@@ -8,6 +8,7 @@ import cn.edu.thssdb.utils.Global;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Manager {
@@ -68,14 +69,14 @@ public class Manager {
 
   /**
    * 当前包含的所有数据库
+   * '''将ArrayList改为LinkedList,相对速度快点'''
    */
-  public ArrayList<Database> getDatabases(){
-    ArrayList<Database> result= new ArrayList<>();
+  public LinkedList<Database> getDatabases(){
+    LinkedList<Database> result= new LinkedList<>();
     for(Database db:databases.values()){
       result.add(db);
     }
     return result;
-
   }
 
   /**

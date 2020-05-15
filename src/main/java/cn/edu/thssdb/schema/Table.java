@@ -19,9 +19,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class Table implements Iterable<Row> {
   ReentrantReadWriteLock lock;
   private String databaseName;
-  public String tableName;
-  public ArrayList<Column> columns;
-  public BPlusTree<Entry, Long> index;
+  private String tableName;
+  private ArrayList<Column> columns;
+  private BPlusTree<Entry, Long> index;
   private int primaryIndex = 0;
   private ArrayList<Integer> primaryIndexList;
 
@@ -107,6 +107,9 @@ public class Table implements Iterable<Row> {
   public RandomAccessFile getRAF(){return dataFile;}
   public ArrayList<Column> getColumns() {
     return columns;
+  }
+  public String getTableName(){
+    return tableName;
   }
 
   private void recover() {

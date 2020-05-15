@@ -48,7 +48,7 @@ public class SchemaTest {
         curDB.create("table2",columns2);
         Table testTable = null;
         for(Table t:curDB.getTables()){
-            if(t.tableName.equals("table1")){
+            if(t.getTableName().equals("table1")){
                 testTable=t;
             }
         }
@@ -97,11 +97,10 @@ public class SchemaTest {
         System.out.print("所有数据库:\n");
         for(Database db : manager.getDatabases()){
             System.out.print(db.getName()+'\n');
-            Table[] tbs=db.getTables();
             System.out.print("该数据库所有表格:(列名，列类型，是否为主键，是否非空，最大长度)\n");
 
-            for(Table table : tbs){
-                System.out.print(table.tableName+'\n');
+            for(Table table : db.getTables()){
+                System.out.print(table.getTableName()+'\n');
                 ArrayList<Column> columns=table.getColumns();
                 for(Column c : columns){
                     System.out.print(c.toString()+'\n');

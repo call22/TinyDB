@@ -1,9 +1,12 @@
 // Generated from /Users/anyanzhe/workspace/ThssDB/src/main/java/cn/edu/thssdb/parser/SQL.g4 by ANTLR 4.8
 package cn.edu.thssdb.parser;
 
+import cn.edu.thssdb.query.statement.Statement;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
+
+import java.util.List;
 
 /**
  * This class provides an empty implementation of {@link SQLListener},
@@ -11,6 +14,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  * of the available methods.
  */
 public class SQLBaseListener implements SQLListener {
+	List<Statement> statementList;	// 记录解析所得内容,用抽象类管理
 	/**
 	 * {@inheritDoc}
 	 *

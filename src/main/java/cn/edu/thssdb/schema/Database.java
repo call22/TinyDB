@@ -11,6 +11,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Database {
@@ -20,14 +21,14 @@ public class Database {
   private HashMap<String, Table> tables;
   ReentrantReadWriteLock lock;
 
-  public Table[] getTables(){
-    Table[] tableList= new Table[tables.size()];
-    int i=0;
+  /**
+   * 和getDatabases格式变为一致: Table[] ==> LinkedList<Table>*/
+  public LinkedList<Table> getTables(){
+    LinkedList<Table> result = new LinkedList<>();
     for(Table t: tables.values()){
-      tableList[i]=t;
-      i++;
+      result.add(t);
     }
-    return tableList;
+    return result;
   }
 
   public String getName(){return name;}
@@ -75,11 +76,11 @@ public class Database {
   private byte[] toSchemaBytes(Table table) {
     ByteBuffer buffer = ByteBuffer.allocate(1024);
     // buffer.put("TABLE".getBytes()); // Magic Number
-    buffer.putInt(table.tableName.length());
-    buffer.put(table.tableName.getBytes());
+    buffer.putInt(table.getTableName().length());
+    buffer.put(table.getTableName().getBytes());
     // buffer.putInt(uniqueID);
-    buffer.putInt(table.columns.size());
-    for (Column column : table.columns) {
+    buffer.putInt(table.getColumns().size());
+    for (Column column : table.getColumns()) {
       buffer.putInt(column.getType().ordinal());
       buffer.putInt(column.getName().length());
       buffer.put(column.getName().getBytes());
@@ -105,7 +106,7 @@ public class Database {
   public void create(String name, Column[] columns) throws IOException {
     if(!tables.containsKey(name)){
       Table newTabel= new Table(this.name,name,columns);
-      tables.put(newTabel.tableName,newTabel);
+      tables.put(newTabel.getTableName(),newTabel);
       persist();
 
     }else{
@@ -203,7 +204,7 @@ public class Database {
         byte[] tableSchema = new byte[tableSchemaLength];
         dis.read(tableSchema);
         Table t= TableFromSchema(tableSchema);
-        tables.put(t.tableName,t);
+        tables.put(t.getTableName(),t);
       }
     }else{
       File metaFile = new File(filename);
