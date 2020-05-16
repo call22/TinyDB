@@ -24,11 +24,7 @@ public class Database {
   /**
    * 和getDatabases格式变为一致: Table[] ==> LinkedList<Table>*/
   public LinkedList<Table> getTables(){
-    LinkedList<Table> result = new LinkedList<>();
-    for(Table t: tables.values()){
-      result.add(t);
-    }
-    return result;
+    return new LinkedList<>(tables.values());
   }
 
   public String getName(){return name;}
@@ -92,7 +88,12 @@ public class Database {
     return buffer.array();
   }
 
-
+  /**
+   *  将数据库信息 (名字|表数量) 转化为字符串*/
+  @Override
+  public String toString(){
+    return this.name + " | " + this.tables.size();
+  }
 
   /**
    * 创建新的表
@@ -176,11 +177,12 @@ public class Database {
     persist();
   }
 
-
-  public String select(QueryTable[] queryTables) {
+  /**
+   * 从数据库中选择表单
+   * @param name 表单名称*/
+  public Table selectTable(String name) {
     // TODO
-    QueryResult queryResult = new QueryResult(queryTables);
-    return null;
+    return tables.get(name);
   }
 
   /**

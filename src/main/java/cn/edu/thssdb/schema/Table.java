@@ -33,6 +33,11 @@ public class Table implements Iterable<Row> {
   private boolean hasPrimaryKey = false;                  // 是否含有主键
   private boolean isMultiPrimaryKey = false;              // 是否是多主键
 
+  /**
+   * 创建表单
+   * @param databaseName 所属数据库
+   * @param tableName 表单名称
+   * @param columns 属性list*/
   public Table(String databaseName, String tableName, Column[] columns) throws IOException {
     this.databaseName = databaseName;
     this.tableName = tableName;
@@ -492,7 +497,10 @@ public class Table implements Iterable<Row> {
     dataFile=new RandomAccessFile(tablePath+File.separator+oldfilename,"rw");
   }
 
-
+  @Override
+  public String toString(){
+    return this.tableName + " | " + this.columns.size();
+  }
 }
 
 
