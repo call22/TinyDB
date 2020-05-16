@@ -43,7 +43,7 @@ public class Table implements Iterable<Row> {
     this.tableName = tableName;
     this.columns = new ArrayList<>(Arrays.asList(columns));
     primaryIndexList = new ArrayList<>();
-    String tablePath= Global.dirPath+databaseName+"/"+tableName;
+    java.lang.String tablePath= Global.dirPath+databaseName+"/"+tableName;
     if(!new File(tablePath).exists()){
       File Tabledir=new File(tablePath);
       Tabledir.mkdirs();
@@ -68,17 +68,10 @@ public class Table implements Iterable<Row> {
     }
 
     // 若无主键 或 多主键 需要创建master列，便于索引
-    if (!hasPrimaryKey) {
+    if (!hasPrimaryKey || isMultiPrimaryKey) {
       Column tmpPrimaryColumn = new Column("IDX", ColumnType.INT, 1, true, -1);
       this.columns.add(0, tmpPrimaryColumn);
-    }
-    else if (isMultiPrimaryKey) {
-      // TODO: 根据多主键映射函数，修改max-length
-      // 多主键会映射为string
-      Column tmpPrimaryColumn = new Column("IDX", ColumnType.STRING, 1, true, 32);
-      this.columns.add(0, tmpPrimaryColumn);
-    }
-    else {
+    } else {
       primaryIndex = primaryIndexList.get(0);   //单主键时的索引
     }
 
@@ -125,14 +118,18 @@ public class Table implements Iterable<Row> {
    * 插入一行数据
    *
    * @param row 待插入的行
-   * @throws IOException
+   * @throws IOException 插入错误
    */
   public void insert(Row row) throws IOException {
-    // TODO: 判断是否有NOT_NULL约束, 且是否满足
-    // end
-
-    // TODO: 判断主键是否重复
-    // end
+    // 判断NOT_NULL约束
+    ArrayList<Entry> entries = row.getEntries();
+    int i = 0;
+    for (Column column : columns) {
+      if(column.getNull() == 1 && entries.get(i) == null) { // 不能是null约束
+        throw new IOException("can not satify NULL constraint");
+      }
+      i++;
+    }
 
     // 若无主键 或 多主键 在IDX列插入索引值
     if (!hasPrimaryKey) {
@@ -140,8 +137,19 @@ public class Table implements Iterable<Row> {
       uniqueID++;
     }
     else if (isMultiPrimaryKey) {
-      // TODO: 插入多键时，映射函数后的索引值
+      // 插入多键时，使用hashCode唯一映射
+      StringBuffer primaryKeyStr = new StringBuffer();
+      for (int primaryIndex : primaryIndexList) {
+        primaryKeyStr.append(row.getEntries().get(primaryIndex).toString());
+      }
+      row.getEntries().add(0, new Entry(primaryKeyStr.toString().hashCode()));
     }
+
+    // 判断主键是否重复
+    if (index.contains(row.getEntries().get(primaryIndex))) {
+      throw new IOException("Key already exists");
+    }
+
 
     // 写入单行数据, 若空闲列表非空，插入至空闲位置，否则插入至文件末尾
     if(freeListPtr == -1) {
@@ -158,12 +166,11 @@ public class Table implements Iterable<Row> {
     byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)];
     Arrays.fill(bytes, (byte) 0);
     ByteBuffer buf = ByteBuffer.wrap(bytes);
-    ArrayList<Entry> entries = row.getEntries();
-    int i = 0;
+    int j = 0;
     for (Entry entry : entries) {
       buf.put( (byte) (entry==null||entry.value == null ? 1 : 0) );
-      buf.put(byteManager.entryToBytes(entry, columns.get(i)));
-      i++;
+      buf.put(byteManager.entryToBytes(entry, columns.get(j)));
+      j++;
     }
     dataFile.write(bytes);
 
