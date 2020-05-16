@@ -30,6 +30,8 @@ public class InsertTableStatement extends Statement {
             Entry[] entries = new Entry[len];
             for(Column column : columns) {
                 int index = columnsName.indexOf(column.getName());
+                if (index == -1)    // 不存在就跳过,为null
+                    continue;
                 String rawValue = rowValue.get(index);
                 switch (column.getType()) {
                     case INT:
@@ -54,9 +56,12 @@ public class InsertTableStatement extends Statement {
             }
             table.insert(new Row(entries));
             result = Result.setMessage("Successfully " + msg);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Fail to " + msg + "entry type format error");
         } catch (IOException e) {
             throw new RuntimeException("Fail to " + msg + e.getMessage());
         }
-        return result;
+
+      return result;
     }
 }
