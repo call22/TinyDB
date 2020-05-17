@@ -53,7 +53,7 @@ value_entry :
 
 select_stmt :
     K_SELECT ( K_DISTINCT | K_ALL )? result_column ( ',' result_column )*
-        K_FROM table_query ( ',' table_query )* ( K_WHERE multiple_condition )? ;
+        K_FROM table_query ( K_WHERE multiple_condition )? ;
 
 update_stmt :
     K_UPDATE table_name
@@ -74,9 +74,7 @@ column_constraint :
     | K_NOT K_NULL ;
 
 multiple_condition :
-    comparer comparator comparer
-    | multiple_condition AND multiple_condition
-    | multiple_condition OR multiple_condition ;
+    comparer comparator comparer;
 
 comparer :
     column_full_name

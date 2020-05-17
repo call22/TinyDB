@@ -5,8 +5,6 @@ import cn.edu.thssdb.schema.Table;
 
 import java.util.Iterator;
 
-/**
- * 用迭代器的方式从当前表中不断获取新的行并判断其是否满足where中条件*/
 public class QueryTable implements Iterator<Row> {
   private Table table;
   private Iterator<Row> iterator;

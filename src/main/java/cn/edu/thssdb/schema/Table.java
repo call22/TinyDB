@@ -218,13 +218,14 @@ public class Table implements Iterable<Row> {
   /**
    * 删除一行数据
    *
-   * @param entry 待删除的主键entry
+   * @param row 待删除的一行数据
    * @throws IOException
    */
-  public void delete(Entry entry) throws IOException {
-    Long position = index.get(entry);
+  public void delete(Row row) throws IOException {
+    Entry primaryEntry = row.getEntries().get(primaryIndex);
+    Long position = index.get(primaryEntry);
     // 先删除索引
-    index.remove(entry);
+    index.remove(primaryEntry);
     // 把数据文件覆盖为空闲列表指针
     dataFile.seek(position);
     dataFile.writeLong(freeListPtr);
@@ -240,7 +241,7 @@ public class Table implements Iterable<Row> {
    * @throws IOException
    */
   public void update(Row row) throws IOException{
-    delete(row.getEntries().get(primaryIndex));
+    delete(row);
     insert(row);
   }
 

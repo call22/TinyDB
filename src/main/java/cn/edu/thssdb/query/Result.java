@@ -14,7 +14,7 @@ import java.util.List;
  * */
 public class Result {
     private List<Row> rows; // 按列存储结果
-    private List<Column> columns; // 存储对应的column
+    private ArrayList<Column> columns; // 存储对应的column
 
     public Result(){
         this.rows = new ArrayList<>();
@@ -25,10 +25,10 @@ public class Result {
     }
 
     public void setColumns(Column[] columns) {
-        this.columns = Arrays.asList(columns);
+        this.columns = (ArrayList<Column>) Arrays.asList(columns);
     }
 
-    public void setColumns(List<Column> columns) {
+    public void setColumns(ArrayList<Column> columns) {
         this.columns = columns;
     }
 
@@ -63,22 +63,13 @@ public class Result {
     /**
      * 添加一列对外接口
      * @param row 待添加的列
-     * @param reverse 是否需要反转
      * @param distinct 是否要求distinct
      * */
-    public void addRow(Row row, boolean reverse, boolean distinct){
-        if(reverse){
-            if(distinct){
-                addRowDistinctReverse(row);
-            }else{
-                addRowReverse(row);
-            }
+    public void addRow(Row row, boolean distinct){
+        if(distinct){
+            addRowDistinct(row);
         }else{
-            if(distinct){
-                addRowDistinct(row);
-            }else{
-                addRow(row);
-            }
+            addRow(row);
         }
     }
 
@@ -86,9 +77,9 @@ public class Result {
         rows.add(row);
     }
 
-    private void addRowReverse(Row row){
-        rows.add(0, row);
-    }
+//    private void addRowReverse(Row row){
+//        rows.add(0, row);
+//    }
 
     private void addRowDistinct(Row row){
         boolean isDuplicate = hasDuplicateRow(row);
@@ -96,11 +87,11 @@ public class Result {
             rows.add(row);
     }
 
-    private void addRowDistinctReverse(Row row){
-        boolean isDuplicate = hasDuplicateRow(row);
-        if(!isDuplicate)
-            rows.add(0, row);
-    }
+//    private void addRowDistinctReverse(Row row){
+//        boolean isDuplicate = hasDuplicateRow(row);
+//        if(!isDuplicate)
+//            rows.add(0, row);
+//    }
 
     /**
      * 检查是否有重复

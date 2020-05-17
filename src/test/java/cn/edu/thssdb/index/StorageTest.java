@@ -67,7 +67,8 @@ public class StorageTest {
   public void testDelete() throws IOException {
     // 测试删除数据，删除id为2
     System.out.println("测试删除id=2：");
-    testTable.delete(new Entry(2));
+    Entry[] entries = {new Entry(2), new Entry("XiaoLi")};
+    testTable.delete(new Row(entries));
     printTestTable();
   }
 

@@ -34,7 +34,7 @@ public class CreateTableStatement extends Statement {
             db.create(tableName, columns);
             result = Result.setMessage("Successfully " + msg);
         } catch (IOException e) {
-            throw new RuntimeException("Fail to " + msg + "Unknown Error");
+            throw new RuntimeException("Fail to " + msg + e.getMessage());
         } catch (DuplicateKeyException e){
             result = Result.setMessage("table name: " + this.tableName + "already exists");
         }

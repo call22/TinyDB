@@ -49,7 +49,7 @@ public class SchemaStatement extends Statement {
                 } catch (DuplicateKeyException e) {
                     result = Result.setMessage("database name: " + this.databaseName + " already exists");
                 } catch (IOException e) {
-                    throw new RuntimeException("Fail to " + msg + " Unknown Error");    // 运行出错, 反馈到server
+                    throw new RuntimeException("Fail to " + msg + e.getMessage());    // 运行出错, 反馈到server
                 }
                 break;
             }
@@ -61,7 +61,7 @@ public class SchemaStatement extends Statement {
                 } catch (KeyNotExistException e) {
                     result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
                 } catch (IOException e) {
-                    throw new RuntimeException("Fail to " + msg + " Unknown Error");
+                    throw new RuntimeException("Fail to " + msg + e.getMessage());
                 }
                 break;
             }
@@ -73,7 +73,7 @@ public class SchemaStatement extends Statement {
                 } catch (KeyNotExistException e) {
                     result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
                 } catch (IOException e) {
-                    throw new RuntimeException("Fail to " + msg + " Unknown Error" + "\n current database: " + manager.getCurrentDB());
+                    throw new RuntimeException("Fail to " + msg + e.getMessage() + "\n current database: " + manager.getCurrentDB());
                 }
                 break;
             }
@@ -85,7 +85,7 @@ public class SchemaStatement extends Statement {
                 } catch (KeyNotExistException e) {
                     result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
                 } catch (IOException e) {
-                    throw new RuntimeException("Fail to " + msg + " Unknown Error");
+                    throw new RuntimeException("Fail to " + msg + e.getMessage());
                 }
                 break;
             }
@@ -97,7 +97,7 @@ public class SchemaStatement extends Statement {
                 Column tableNum = new Column("Table Number", ColumnType.INT, -1, true, 0);
                 result.setColumns(new Column[]{dbName, tableNum});
                 for(Database db : dbs){
-                    result.addRow(new Row(new Entry[]{new Entry(db.getName()), new Entry(db.getTables().size())}), false, true);
+                    result.addRow(new Row(new Entry[]{new Entry(db.getName()), new Entry(db.getTables().size())}), false);
                 }
                 break;
             }
@@ -109,7 +109,7 @@ public class SchemaStatement extends Statement {
                 Column columnNum = new Column("Column Number", ColumnType.INT, -1, true, 0);
                 result.setColumns(new Column[]{tableName, columnNum});
                 for(Table tb : tables){
-                    result.addRow( new Row(new Entry[]{new Entry(tb.getTableName()), new Entry(tb.getColumns().size())}), false, true);
+                    result.addRow( new Row(new Entry[]{new Entry(tb.getTableName()), new Entry(tb.getColumns().size())}), false);
                 }
                 break;
             }
@@ -125,7 +125,7 @@ public class SchemaStatement extends Statement {
                 result.setColumns(new Column[]{columnName, type, primary, isNull, maxLength});
                 for(Column column : columns){
                     result.addRow( new Row(new Entry[]{new Entry(column.getName()), new Entry(column.getType().toString())
-                    , new Entry(column.isPrimary() ? 1 : 0), new Entry(column.getNull()), new Entry(column.getMaxLength())}), false, false);
+                    , new Entry(column.isPrimary() ? 1 : 0), new Entry(column.getNull()), new Entry(column.getMaxLength())}), false);
                 }
             }
             default:
