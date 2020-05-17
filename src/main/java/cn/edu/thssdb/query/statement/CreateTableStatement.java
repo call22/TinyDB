@@ -20,6 +20,7 @@ public class CreateTableStatement extends Statement {
         this.tableName = "error";    // 当语法出错时这样初始化
     }
     public CreateTableStatement(String tableName, ArrayList<Column> columns){
+        // 检查 类型为string的column是否给定了maxlength, 在解析时完成
         this.tableName = tableName;
         this.columns = columns.toArray(new Column[0]);
     }

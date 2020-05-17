@@ -40,7 +40,7 @@ public class Table implements Iterable<Row> {
    * @param columns 属性list*/
   public Table(String databaseName, String tableName, Column[] columns) throws IOException {
     this.databaseName = databaseName;
-    this.tableName = tableName;
+    this.tableName = tableName.toUpperCase();
     this.columns = new ArrayList<>(Arrays.asList(columns));
     primaryIndexList = new ArrayList<>();
     String tablePath= Global.dirPath+databaseName+"/"+tableName;
