@@ -15,13 +15,26 @@ public class MultipleCondition {
     private List<ComparerData> comparerDataList;    // 2个comparer比较
     private List<MetaInfo> metaInfos;
     private List<Integer> index;
+    private int comp_index = 0;         // 当只有一个comp时, 记录comp出现的位置
 
-    public MultipleCondition(OP_TYPE op_type, ComparerData com1, ComparerData com2, MetaInfo meta1, MetaInfo meta2){
+    public MultipleCondition(OP_TYPE op_type, ComparerData com1, ComparerData com2){
         this.comparator = op_type;
         this.comparerDataList.add(com1);
         this.comparerDataList.add(com2);
-        this.metaInfos.add(meta1);
-        this.metaInfos.add(meta2);
+    }
+
+    /**
+     * 补丁: 因为初期获取不了metaInfo*/
+    public void setMetaInfos(MetaInfo meta){
+        this.metaInfos.add(meta);
+    }
+
+    public List<MetaInfo> getMetaInfos() {
+        return this.metaInfos;
+    }
+
+    public List<ComparerData> getComparerDataList() {
+        return comparerDataList;
     }
 
     /**
@@ -29,18 +42,16 @@ public class MultipleCondition {
      * 满足: true
      * 不满足: false*/
     public boolean check(){
+        //TOdo 这里有问题
         index.clear();
-        boolean flag = false;   // 只能row op num, 不能num op row
         int i = 0;
         for(ComparerData comp : comparerDataList){
             if(comp.getComparerType() == ComparerData.COMPARER_TYPE.table_column){
                 String tableName = comp.getTableName();
                 String columnName = comp.getColumnName();
-                if(!tableName.equals(metaInfos.get(i).getTableName()) || metaInfos.get(i).columnFind(columnName) == -1 || flag)
-                    return false;   // flag == true ==> num op row
+                if(!tableName.equals(metaInfos.get(i).getTableName()) || metaInfos.get(i).columnFind(columnName) == -1)
+                    return false;
                 index.add(metaInfos.get(i).columnFind(columnName));    // 索引attr位置
-            }else {
-                flag = true;
             }
             i++;
         }
@@ -49,14 +60,18 @@ public class MultipleCondition {
 
     /**
      * 0: num op num,
-     * 1: row op num,
+     * 1: row op num, num op row
      * 2: row op row,
      * */
     public int getTypes(){  // compare的类型,
         int count = 0;
+        int i=0;
         for(ComparerData comp : comparerDataList){
-            if(comp.getComparerType() == ComparerData.COMPARER_TYPE.table_column)
+            if(comp.getComparerType() == ComparerData.COMPARER_TYPE.table_column){
                 count++;
+                comp_index = i;
+            }
+            i++;
         }
         return count;
     }
@@ -71,11 +86,19 @@ public class MultipleCondition {
         return compare(e1, e2);
     }
 
-    public boolean calculate(Row row){  // row op num
-        Entry e1 = row.getEntries().get(index.get(0));
-        if(e1 == null || comparerDataList.get(1).getComparerType() == ComparerData.COMPARER_TYPE._null)
-            return false;
-        Entry e2 = comparerDataList.get(1).getData();
+    public boolean calculate(Row row){  // row op num   / num op row
+        Entry e1, e2;
+        if(comp_index == 0) {
+            e1 = row.getEntries().get(index.get(0));
+            if (e1 == null || comparerDataList.get(1).getComparerType() == ComparerData.COMPARER_TYPE._null)
+                return false;
+            e2 = comparerDataList.get(1).getData();
+        }else{
+            e2 = row.getEntries().get(index.get(0));
+            if (e2 == null || comparerDataList.get(0).getComparerType() == ComparerData.COMPARER_TYPE._null)
+                return false;
+            e1 = comparerDataList.get(0).getData();
+        }
         return compare(e1, e2);
     }
 
