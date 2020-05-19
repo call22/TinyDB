@@ -121,13 +121,13 @@ public class SelectJoinTableStatement extends Statement {
         for (Column column : columns1) {
             // 名字改为： tablename + "." + columnname
             tmpColumns.add(new Column(table1.getTableName() + "." + column.getName(),
-                    column.getType(), 0,
+                    column.getType(), false,
                     column.getNull(), column.getMaxLength()));
         }
         for (Column column : columns2) {
             // 名字改为： tablename + "." + columnname
             tmpColumns.add(new Column(table2.getTableName() + "." + column.getName(),
-                    column.getType(), 0,
+                    column.getType(), false,
                     column.getNull(), column.getMaxLength()));
         }
 
@@ -152,7 +152,7 @@ public class SelectJoinTableStatement extends Statement {
                                 break;
                             case 2:
                                 if (onCondition.calculate(matchRowToTableName(metaInfos.get(0), row1, row2),
-                                        matchRowToTableName(metaInfos.get(1), row1, row2)))) {
+                                        matchRowToTableName(metaInfos.get(1), row1, row2))) {
                                     runWhereCondition(row1, row2);
                                 }
                                 break;
