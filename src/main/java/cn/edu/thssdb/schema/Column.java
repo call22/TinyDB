@@ -35,6 +35,7 @@ public class Column implements Comparable<Column> {
   public int getMaxLength() {
     return this.maxLength;
   }
+
   public boolean getNull(){return notNull;}
   public boolean isPrimary() {
     return primary;

@@ -29,6 +29,10 @@ public class MultipleCondition {
         this.metaInfos.add(meta);
     }
 
+    public List<MetaInfo> getMetaInfos() {
+        return this.metaInfos;
+    }
+
     public List<ComparerData> getComparerDataList() {
         return comparerDataList;
     }
