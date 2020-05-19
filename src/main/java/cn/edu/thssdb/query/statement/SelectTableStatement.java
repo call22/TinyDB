@@ -12,15 +12,21 @@ public class SelectTableStatement extends Statement {
     private ArrayList<ResultColumn> resultColumns;  // 返回形式
 
     private boolean isAll;                          // ResultColumn type
+    private boolean isDistinct;                     // 新增, 区分result Column为distinct还是all
     private ArrayList<Column> columnList;           // resultColumns的对应column
     private ArrayList<Integer> columnIndex;         // resultColumns的对应索引
 
     public Result result;
 
-    public SelectTableStatement(String tableName, MultipleCondition whereCondition, ArrayList<ResultColumn> resultColumns) {
+    public SelectTableStatement(){
+        this.tableName = "error";
+    }
+
+    public SelectTableStatement(String tableName, MultipleCondition whereCondition, ArrayList<ResultColumn> resultColumns, boolean isDistinct) {
         this.tableName = tableName;
         this.whereCondition = whereCondition;
         this.resultColumns = resultColumns;
+        this.isDistinct = isDistinct;
         isAll = resultColumns.get(0).getResultType().equals(ResultColumn.RESULT_COLUMN_TYPE.all);
     }
 
@@ -61,16 +67,16 @@ public class SelectTableStatement extends Statement {
      * @param result 结果引用
      * @param columnIndex 待选择列索引
      */
-    static void addRow2ResultAfterSelectColumns(Row row, boolean isAll, Result result, ArrayList<Integer> columnIndex) {
+    static void addRow2ResultAfterSelectColumns(Row row, boolean isAll, Result result, ArrayList<Integer> columnIndex, boolean isDistinct) {
         if(isAll) {
-            result.addRow(row, false);
+            result.addRow(row, isDistinct);
         } else {
             int len = columnIndex.size();
             Entry[] entries = new Entry[len];
             for (int i = 0; i < len; i++) {
                 entries[i] = row.getEntries().get(i);
             }
-            result.addRow(new Row(entries), false);
+            result.addRow(new Row(entries), isDistinct);
         }
     }
 
@@ -93,17 +99,17 @@ public class SelectTableStatement extends Statement {
                     switch (type) {
                         case 0:
                             if (whereCondition.calculate()) {
-                                addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex);
+                                addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex, this.isDistinct);
                             }
                             break;
                         case 1:
                             if (whereCondition.calculate(row)) {
-                                addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex);
+                                addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex, this.isDistinct);
                             }
                             break;
                         case 2:
                             if (whereCondition.calculate(row, row)) {
-                                addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex);
+                                addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex, this.isDistinct);
                             }
                             break;
                         default:

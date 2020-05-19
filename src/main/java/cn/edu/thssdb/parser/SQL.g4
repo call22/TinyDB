@@ -8,18 +8,18 @@ sql_stmt_list :
 
 /** commit和rollback*/
 sql_stmt :
-    create_table_stmt   // get
-    | create_db_stmt    // get
-    | drop_db_stmt      // get
-    | delete_stmt       // get
-    | drop_table_stmt   // get
-    | insert_stmt       // get
+    create_table_stmt
+    | create_db_stmt
+    | drop_db_stmt
+    | delete_stmt
+    | drop_table_stmt
+    | insert_stmt
     | select_stmt
-    | show_db_stmt      // get
-    | show_table_stmt   // get
-    | show_meta_stmt    // get
-    | use_db_stmt       // get
-    | update_stmt;      // get
+    | show_db_stmt
+    | show_table_stmt
+    | show_meta_stmt
+    | use_db_stmt
+    | update_stmt;
 
 create_db_stmt :
     K_CREATE K_DATABASE database_name ;

@@ -15,7 +15,6 @@ public class Listener extends SQLBaseListener{
     ArrayList<MultipleCondition> whereConditions = new ArrayList<>();	// 存储where条件
     ArrayList<MultipleCondition> onConditions = new ArrayList<>();		// 存储on条件
     ArrayList<Statement> statements = new ArrayList<>();				// 全部statement
-    ArrayList<ResultColumn> select_resultColumn = new ArrayList<>();	// select时返回类型
     ArrayList<Column> create_columns = new ArrayList<>();               // create时存储column
     ArrayList<String> duplicate_columns_check = new ArrayList<>();      // 帮助检查是否重名
     ArrayList<SyntaxErrorException> syntaxErrorExceptions = new ArrayList<>();  // 记录一次statement解析过程中的语法错误
@@ -63,6 +62,7 @@ public class Listener extends SQLBaseListener{
     }
 
     // create_table_stmt
+
     @Override
     public void enterColumn_def(SQLParser.Column_defContext ctx) {
         String column_name = ctx.column_name().getText().toUpperCase();
@@ -148,6 +148,7 @@ public class Listener extends SQLBaseListener{
     }
 
     // insert_table_stmt
+
     @Override
     public void enterInsert_stmt(SQLParser.Insert_stmtContext ctx) {
         Statement insert_table;
@@ -171,6 +172,7 @@ public class Listener extends SQLBaseListener{
     }
 
     // get multiple_condition
+
     private ComparerData getFromLiteral_value(String value){
         ComparerData comparer = new ComparerData();
         ArrayList<String> regexs = new ArrayList<>();
@@ -232,9 +234,13 @@ public class Listener extends SQLBaseListener{
     public void enterMultiple_condition(SQLParser.Multiple_conditionContext ctx) {
         ArrayList<ComparerData> comparerList = new ArrayList<>();
         for(SQLParser.ComparerContext comp : ctx.comparer()){
-            ComparerData comparer = new ComparerData();
+            ComparerData comparer;
             if(comp.column_full_name() != null){
-                comparer = new ComparerData(comp.column_full_name().table_name().getText().toUpperCase(),
+                String table_name = null;
+                if(comp.column_full_name().table_name() != null){
+                    table_name = comp.column_full_name().table_name().getText().toUpperCase();
+                }
+                comparer = new ComparerData(table_name,
                         comp.column_full_name().column_name().getText().toUpperCase());
             }else{
                 String value = comp.literal_value().getChild(0).getText();
@@ -250,6 +256,7 @@ public class Listener extends SQLBaseListener{
     }
 
     // delete_table_stmt
+
     @Override
     public void exitDelete_stmt(SQLParser.Delete_stmtContext ctx) {
         Statement delete_row;
@@ -280,7 +287,7 @@ public class Listener extends SQLBaseListener{
             ComparerData comparerData = getFromLiteral_value(value);
             update_row = new UpdateTableStatement(tableName, columnName, comparerData, whereConditions.get(0));
         }else{
-            update_row = new DeleteTableStatement();
+            update_row = new UpdateTableStatement();
             update_row.setValid(false);
             StringBuilder msg = new StringBuilder();
             for (SyntaxErrorException e : syntaxErrorExceptions){
@@ -295,7 +302,61 @@ public class Listener extends SQLBaseListener{
     // select_table_stmt
 
     @Override
-    public void exitSelect_stmt(SQLParser.Select_stmtContext ctx) {
+    public void exitTable_query(SQLParser.Table_queryContext ctx) {
+        if(ctx.getChildCount() > 1){
+            // where中添加的condition为on condition
+            onConditions.add(whereConditions.get(whereConditions.size() - 1));
+            whereConditions.remove(whereConditions.size() - 1);
+        }
+    }
 
+    @Override
+    public void exitSelect_stmt(SQLParser.Select_stmtContext ctx) {
+        Statement select_row;
+
+        if(syntaxErrorExceptions.isEmpty()){
+            boolean isDistinct = false;
+            if (ctx.K_DISTINCT() != null ){
+                isDistinct = true;
+            }
+
+            ArrayList<ResultColumn> select_resultColumn = new ArrayList<>();	// select时返回类型
+            for (SQLParser.Result_columnContext result_columnContext : ctx.result_column()) {
+                if(result_columnContext.column_full_name() == null){
+                    // all
+                    select_resultColumn.add(new ResultColumn());
+                } else {
+                    String table_name = "";
+                    if (result_columnContext.column_full_name().table_name() != null){
+                        table_name = result_columnContext.column_full_name().table_name().getText().toUpperCase();
+                    }
+                    select_resultColumn.add(
+                            new ResultColumn(table_name,
+                                    result_columnContext.column_full_name().column_name().getText().toUpperCase()));
+                }
+            }
+
+            ArrayList<String> table_name = new ArrayList<>();
+            if(ctx.table_query().getChildCount() > 1){
+                for(SQLParser.Table_nameContext table_nameContext : ctx.table_query().table_name()){
+                    table_name.add(table_nameContext.getText().toUpperCase());
+                }
+                select_row = new SelectJoinTableStatement(table_name, onConditions.get(0), whereConditions.get(0), select_resultColumn, isDistinct);
+            }
+            else{
+                table_name.add(ctx.table_query().getChild(0).getText().toUpperCase());
+                select_row = new SelectTableStatement(table_name.get(0), whereConditions.get(0), select_resultColumn, isDistinct);
+            }
+        }else{
+            select_row = new SelectTableStatement();
+            select_row.setValid(false);
+            StringBuilder msg = new StringBuilder();
+            for (SyntaxErrorException e : syntaxErrorExceptions){
+                msg.append("; ").append(e.getMessage());
+            }
+            select_row.setMessage(msg.toString());
+            syntaxErrorExceptions.clear();  // 清空错误集合
+        }
+        statements.add(select_row);
     }
 }

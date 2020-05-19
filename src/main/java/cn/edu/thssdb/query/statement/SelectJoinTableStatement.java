@@ -8,24 +8,26 @@ import java.util.List;
 
 public class SelectJoinTableStatement extends Statement {
 
-    private List<String> tableName;                 // 2个table
+    private ArrayList<String> tableName;                 // 2个table
     private MultipleCondition onCondition;          // on条件
     private MultipleCondition whereCondition;       // where条件
     private ArrayList<ResultColumn> resultColumns;  // 最终返回形式
 
     private boolean isAll;                          // ResultColumn type
+    private boolean isDistinct;                     // 新增, 区分result Column为distinct还是all
     private ArrayList<Column> columnList;           // resultColumns的对应column
     private ArrayList<Integer> columnIndex;         // resultColumns的对应索引
 
     private Table table1, table2;
     public Result result;
 
-    SelectJoinTableStatement(List<String> tableName, MultipleCondition onCondition,
-                             MultipleCondition whereCondition, ArrayList<ResultColumn> resultColumns) {
+    public SelectJoinTableStatement(ArrayList<String> tableName, MultipleCondition onCondition,
+                             MultipleCondition whereCondition, ArrayList<ResultColumn> resultColumns, boolean isDistinct) {
         this.tableName = tableName;
         this.onCondition = onCondition;
         this.whereCondition = whereCondition;
         this.resultColumns = resultColumns;
+        this.isDistinct = isDistinct;
         isAll = resultColumns.get(0).getResultType().equals(ResultColumn.RESULT_COLUMN_TYPE.all);
     }
 
@@ -71,7 +73,7 @@ public class SelectJoinTableStatement extends Statement {
     /**
      * 根据metainfo的table名返回对应row
      */
-    public Row matchRowToTableName(MetaInfo metaInfo, Row row1, Row row2) {
+    private Row matchRowToTableName(MetaInfo metaInfo, Row row1, Row row2) {
         if (metaInfo.getTableName().equals(table1.getTableName())) {
             return row1;
         } else {
@@ -82,24 +84,24 @@ public class SelectJoinTableStatement extends Statement {
     /**
      * 执行where语句
      */
-    public void runWhereCondition(Row row1, Row row2) {
+    private void runWhereCondition(Row row1, Row row2) {
         int type = whereCondition.getTypes();
         List<MetaInfo> metaInfos = whereCondition.getMetaInfos();
         switch (type) {
             case 0:
                 if (whereCondition.calculate()) {
-                    SelectTableStatement.addRow2ResultAfterSelectColumns(combineRows(row1, row2), isAll, result, columnIndex);
+                    SelectTableStatement.addRow2ResultAfterSelectColumns(combineRows(row1, row2), isAll, result, columnIndex, this.isDistinct);
                 }
                 break;
             case 1:
                 if (whereCondition.calculate(matchRowToTableName(metaInfos.get(0), row1, row2))) {
-                    SelectTableStatement.addRow2ResultAfterSelectColumns(combineRows(row1, row2), isAll, result, columnIndex);
+                    SelectTableStatement.addRow2ResultAfterSelectColumns(combineRows(row1, row2), isAll, result, columnIndex, this.isDistinct);
                 }
                 break;
             case 2:
                 if (whereCondition.calculate(matchRowToTableName(metaInfos.get(0), row1, row2),
                         matchRowToTableName(metaInfos.get(1), row1, row2))) {
-                    SelectTableStatement.addRow2ResultAfterSelectColumns(combineRows(row1, row2), isAll, result, columnIndex);
+                    SelectTableStatement.addRow2ResultAfterSelectColumns(combineRows(row1, row2), isAll, result, columnIndex, this.isDistinct);
                 }
                 break;
             default:
