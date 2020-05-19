@@ -80,6 +80,16 @@ public class Manager {
   }
 
   /**
+   * 按照数据库名称获取db, 没有则返回null
+   * @param databaseName 想获取的数据库名称*/
+  public Database selectDatabase(String databaseName){
+    if(databases.containsKey(databaseName)){
+      return databases.get(databaseName);
+    }
+    return null;
+  }
+
+  /**
    * 创建新数据库
    * @param dbname 新的数据库名
    * @throws IOException 将新表信息写入文件时出错
@@ -109,7 +119,7 @@ public class Manager {
       deletedDB.dropSelf();
 
       databases.remove(dbName);
-      if(dbName==currentDB){
+      if(dbName.equals(currentDB)){
         if(databases.size()>0){
           currentDB=getDatabases().get(0).getName();
 

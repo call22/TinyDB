@@ -6,18 +6,20 @@ parse :
 sql_stmt_list :
     ';'* sql_stmt ( ';'+ sql_stmt )* ';'* ;
 
+/** commit和rollback*/
 sql_stmt :
-    create_table_stmt
-    | create_db_stmt
-    | drop_db_stmt
-    | delete_stmt
-    | drop_table_stmt
-    | insert_stmt
+    create_table_stmt   // get
+    | create_db_stmt    // get
+    | drop_db_stmt      // get
+    | delete_stmt       // get
+    | drop_table_stmt   // get
+    | insert_stmt       // get
     | select_stmt
-    | show_db_stmt
-    | show_table_stmt
-    | show_meta_stmt
-    | update_stmt ;
+    | show_db_stmt      // get
+    | show_table_stmt   // get
+    | show_meta_stmt    // get
+    | use_db_stmt       // get
+    | update_stmt;      // get
 
 create_db_stmt :
     K_CREATE K_DATABASE database_name ;
@@ -31,6 +33,9 @@ create_table_stmt :
 
 show_meta_stmt :
     K_SHOW K_TABLE table_name ;
+
+use_db_stmt :
+    K_USE database_name;
 
 delete_stmt :
     K_DELETE K_FROM table_name ( K_WHERE multiple_condition )? ;
@@ -118,14 +123,11 @@ GT : '>';
 LE : '<=';
 GE : '>=';
 
-AND : '&&';
-OR : '||';
-
 T_INT : I N T;
 T_LONG : L O N G;
 T_FLOAT : F L O A T;
 T_DOUBLE : D O U B L E;
-T_STRING : S T R I N G;
+T_STRING : C H A R;
 
 K_ADD : A D D;
 K_ALL : A L L;
@@ -179,14 +181,6 @@ EXPONENT :
 STRING_LITERAL :
     '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
-SINGLE_LINE_COMMENT :
-    '--' ~[\r\n]* -> channel(HIDDEN) ;
-
-MULTILINE_COMMENT :
-    '/*' .*? ( '*/' | EOF ) -> channel(HIDDEN) ;
-
-SPACES :
-    [ \u000B\t\r\n] -> channel(HIDDEN) ;
 
 fragment DIGIT : [0-9] ;
 fragment A : [aA] ;

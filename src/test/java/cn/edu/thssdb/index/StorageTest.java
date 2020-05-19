@@ -12,8 +12,8 @@ import java.io.IOException;
 
 public class StorageTest {
   Column[] testColumnList = {
-          new Column("id", ColumnType.INT, 1, true, 0),
-          new Column("name", ColumnType.STRING, 0, true, 16)
+          new Column("id", ColumnType.INT, true, true, 0),
+          new Column("name", ColumnType.STRING, false, true, 16)
   };
   Table testTable;
 
@@ -46,7 +46,7 @@ public class StorageTest {
   public void testAlterAdd() throws IOException {
     // 测试alterADD(age)：
     System.out.println("测试alterADD(age):");
-    testTable.alterADD(new Column("age",ColumnType.INT,0,false,0));
+    testTable.alterADD(new Column("age",ColumnType.INT,false,false,0));
 
     //testTable.alterADD("age",ColumnType.INT);
     printTestTable();

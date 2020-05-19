@@ -11,6 +11,10 @@ public class InsertTableStatement extends Statement {
     private ArrayList<String> columnsName;
     private ArrayList<String> rowValue;
 
+    public InsertTableStatement(){
+        tableName = "error";
+    }
+
     public InsertTableStatement(String tableName, ArrayList<String> columnsName, ArrayList<String> rowValue){
         this.tableName = tableName;
         this.columnsName = columnsName;

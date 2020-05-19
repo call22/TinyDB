@@ -12,6 +12,7 @@ import javax.swing.plaf.nimbus.State;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import static javafx.scene.input.KeyCode.L;
 
@@ -20,6 +21,10 @@ public class UpdateTableStatement extends Statement {
     private String columnName;
     private ComparerData value; // check赋值是否符合column要求
     private MultipleCondition multipleCondition;
+
+    public UpdateTableStatement(){
+        tableName = "error";
+    }
 
     public UpdateTableStatement(String tableName, String columnName, ComparerData value, MultipleCondition multipleCondition){
         this.tableName = tableName;
@@ -33,7 +38,7 @@ public class UpdateTableStatement extends Statement {
         Column column = table.getColumns().get(idx);
         // check
         if(value.getComparerType() == ComparerData.COMPARER_TYPE._null){
-            if(column.getNull() == 0)
+            if(!column.getNull())
                 return false;
         }else { // 如果value可以与column.type值比较, 则认为合法
             try {
@@ -65,6 +70,10 @@ public class UpdateTableStatement extends Statement {
 
     @Override
     public Result execute(Manager manager) throws RuntimeException {
+        /** set MetoInfo 到multipleCondition*/
+        DeleteTableStatement.setMetaInfo(manager, multipleCondition);
+
+        /** next */
         String msg = "[update table]: " + this.tableName;
         Table table = manager.getCurrentDB().selectTable(tableName);
         Iterator<Row> iterator = table.iterator();

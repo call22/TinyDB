@@ -1,5 +1,4 @@
-// Generated from SQL.g4 by ANTLR 4.7.1
-package cn.edu.thssdb.parser;
+package cn.edu.thssdb.parser;// Generated from .\SQL.g4 by ANTLR 4.7.1
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -77,6 +76,16 @@ public interface SQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitShow_meta_stmt(SQLParser.Show_meta_stmtContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SQLParser#use_db_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void enterUse_db_stmt(SQLParser.Use_db_stmtContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SQLParser#use_db_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void exitUse_db_stmt(SQLParser.Use_db_stmtContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link SQLParser#delete_stmt}.
 	 * @param ctx the parse tree

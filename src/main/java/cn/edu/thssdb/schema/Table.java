@@ -69,7 +69,7 @@ public class Table implements Iterable<Row> {
 
     // 若无主键 或 多主键 需要创建master列，便于索引
     if (!hasPrimaryKey || isMultiPrimaryKey) {
-      Column tmpPrimaryColumn = new Column("IDX", ColumnType.INT, 1, true, -1);
+      Column tmpPrimaryColumn = new Column("IDX", ColumnType.INT, true, true, -1);
       this.columns.add(0, tmpPrimaryColumn);
     } else {
       primaryIndex = primaryIndexList.get(0);   //单主键时的索引
@@ -125,7 +125,7 @@ public class Table implements Iterable<Row> {
     ArrayList<Entry> entries = row.getEntries();
     int i = 0;
     for (Column column : columns) {
-      if(column.getNull() == 1 && entries.get(i) == null) { // 不能是null约束
+      if(column.getNull() && entries.get(i) == null) { // 不能是null约束
         throw new IOException("can not satify NULL constraint");
       }
       i++;

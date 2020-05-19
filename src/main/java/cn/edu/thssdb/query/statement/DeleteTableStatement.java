@@ -1,15 +1,22 @@
 package cn.edu.thssdb.query.statement;
 
+import cn.edu.thssdb.query.ComparerData;
+import cn.edu.thssdb.query.MetaInfo;
 import cn.edu.thssdb.query.MultipleCondition;
 import cn.edu.thssdb.query.Result;
 import cn.edu.thssdb.schema.*;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 public class DeleteTableStatement extends Statement {
     private String tableName;
     private MultipleCondition multipleCondition;    // 删除的条件
+
+    public DeleteTableStatement(){
+        tableName = "error";
+    }
 
     public DeleteTableStatement(String tableName, MultipleCondition multipleCondition){
         this.tableName = tableName;
@@ -18,6 +25,10 @@ public class DeleteTableStatement extends Statement {
 
     @Override
     public Result execute(Manager manager) throws RuntimeException {
+        /** set MetoInfo 到multipleCondition*/
+        setMetaInfo(manager, multipleCondition);
+
+        /** next */
         Result result = null;
         String msg = "[delete row in table]: " + this.tableName;
         Database db = manager.getCurrentDB();
@@ -66,6 +77,17 @@ public class DeleteTableStatement extends Statement {
             throw new RuntimeException("fail to " + msg + e.getMessage());
         }
         return result;
+    }
+
+    static void setMetaInfo(Manager manager, MultipleCondition multipleCondition) {
+        List<ComparerData> comparerDatas = multipleCondition.getComparerDataList();
+        for(ComparerData comparerData1 : comparerDatas){
+            if(comparerData1.getComparerType() == ComparerData.COMPARER_TYPE.table_column){
+                String meta_table_name = comparerData1.getTableName();
+                MetaInfo meta = new MetaInfo(meta_table_name, manager.getCurrentDB().selectTable(meta_table_name).getColumns());
+                multipleCondition.setMetaInfos(meta);
+            }
+        }
     }
     //TODO
     // 考虑delete失败后, 已经被删除的数据如何恢复

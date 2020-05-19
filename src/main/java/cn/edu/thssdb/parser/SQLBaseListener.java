@@ -1,5 +1,6 @@
-package cn.edu.thssdb.parser;// Generated from SQL.g4 by ANTLR 4.7.1
+package cn.edu.thssdb.parser;// Generated from .\SQL.g4 by ANTLR 4.7.1
 
+import cn.edu.thssdb.parser.SQLListener;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -94,6 +95,18 @@ public class SQLBaseListener implements SQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitShow_meta_stmt(SQLParser.Show_meta_stmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterUse_db_stmt(SQLParser.Use_db_stmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitUse_db_stmt(SQLParser.Use_db_stmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

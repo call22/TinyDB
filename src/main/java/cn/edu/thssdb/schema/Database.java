@@ -78,7 +78,7 @@ public class Database {
       buffer.putInt(column.getName().length());
       buffer.put(column.getName().getBytes());
       buffer.putInt(column.isPrimary()?1:0);
-      buffer.putInt(column.getNull());
+      buffer.putInt(column.getNull()?1:0);
 
       buffer.putInt(column.getMaxLength());
     }
@@ -252,8 +252,8 @@ public class Database {
       int nameSize = buffer.getInt();
       byte[] columnName = new byte[nameSize];
       buffer.get(columnName);
-      int primary = buffer.getInt();
-      boolean notnull= buffer.getInt()==1?true:false;
+      boolean primary = buffer.getInt()==1;
+      boolean notnull= buffer.getInt() == 1;
       int maxlength = buffer.getInt();
       columns[i] = new Column(new String(columnName),type,primary,notnull,maxlength);
     }

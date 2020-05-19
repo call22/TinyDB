@@ -112,7 +112,7 @@ public class Result {
      * 对于返回非table类型的操作, 直接调用此函数*/
     public static Result setMessage(String message){
         Result result = new Result();
-        result.setColumns(new Column[]{new Column("message", ColumnType.STRING, 1, true, 256)});
+        result.setColumns(new Column[]{new Column("message", ColumnType.STRING, true, true, 256)});
         result.addRow(new Row(new Entry[]{new Entry(message)}));
         return result;
     }
