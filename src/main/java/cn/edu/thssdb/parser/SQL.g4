@@ -124,7 +124,7 @@ T_INT : I N T;
 T_LONG : L O N G;
 T_FLOAT : F L O A T;
 T_DOUBLE : D O U B L E;
-T_STRING : C H A R;
+T_STRING : S T R I N G;
 
 K_ADD : A D D;
 K_ALL : A L L;

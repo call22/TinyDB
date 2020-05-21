@@ -91,7 +91,7 @@ public class Listener extends SQLBaseListener{
             case "DOUBLE":
                 type = ColumnType.DOUBLE;
                 break;
-            case "CHAR":
+            case "STRING":
                 type = ColumnType.STRING;
                 try{
                     max_length = Integer.parseInt(ctx.type_name().NUMERIC_LITERAL().toString());

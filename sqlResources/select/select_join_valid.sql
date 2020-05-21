@@ -1,15 +1,15 @@
 create table student1
-	(ID			char(5),
-	 name			char(20) not null,
-	 dept_name		char(20),
+	(ID			string(5),
+	 name			string(20) not null,
+	 dept_name		string(20),
 	 tot_cred		int,
 	 primary key (ID)
 	);
 
 create table student2
-	(ID			char(5),
-	 name			char(20) not null,
-	 dept_name		char(20),
+	(ID			string(5),
+	 name			string(20) not null,
+	 dept_name		string(20),
 	 tot_cred		int,
 	 primary key (ID)
 	);
