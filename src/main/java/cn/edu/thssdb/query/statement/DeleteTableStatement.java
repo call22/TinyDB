@@ -7,6 +7,7 @@ import cn.edu.thssdb.query.Result;
 import cn.edu.thssdb.schema.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class DeleteTableStatement extends Statement {
     @Override
     public Result execute(Manager manager) throws RuntimeException {
         /** set MetoInfo 到multipleCondition*/
-        setMetaInfo(manager, multipleCondition);
+        setMetaInfo(tableName, manager, multipleCondition);
 
         /** next */
         Result result = null;
@@ -50,8 +51,9 @@ public class DeleteTableStatement extends Statement {
                     }
                     case 1:{
                         while (iterator.hasNext()){
-                            if(multipleCondition.calculate(iterator.next())){
-                                table.delete(iterator.next());
+                            Row row = iterator.next();
+                            if(multipleCondition.calculate(row)){
+                                table.delete(row);
                                 times++;
                             }
                         }
@@ -60,7 +62,7 @@ public class DeleteTableStatement extends Statement {
                         while (iterator.hasNext()){
                             Row temp = iterator.next();
                             if(multipleCondition.calculate(temp, temp)){
-                                table.delete(iterator.next());
+                                table.delete(temp);
                                 times++;
                             }
                         }
@@ -79,15 +81,25 @@ public class DeleteTableStatement extends Statement {
         return result;
     }
 
-    static void setMetaInfo(Manager manager, MultipleCondition multipleCondition) {
+    /**
+     * 设置metaInfo
+     * @param tableName 当前table名
+     * @param manager 当前manager
+     * @param multipleCondition 条件*/
+    static void setMetaInfo(String tableName, Manager manager, MultipleCondition multipleCondition) {
         List<ComparerData> comparerDatas = multipleCondition.getComparerDataList();
+        ArrayList<ComparerData> comparerDataArrayList = new ArrayList<>();
         for(ComparerData comparerData1 : comparerDatas){
             if(comparerData1.getComparerType() == ComparerData.COMPARER_TYPE.table_column){
-                String meta_table_name = comparerData1.getTableName();
+                String meta_table_name = comparerData1.getTableName() == null ? tableName : comparerData1.getTableName();
+                comparerDataArrayList.add(new ComparerData(meta_table_name, comparerData1.getColumnName()));
                 MetaInfo meta = new MetaInfo(meta_table_name, manager.getCurrentDB().selectTable(meta_table_name).getColumns());
                 multipleCondition.setMetaInfos(meta);
+            }else{
+                comparerDataArrayList.add(comparerData1);
             }
         }
+        multipleCondition.setComparator(comparerDataArrayList);
     }
     //TODO
     // 考虑delete失败后, 已经被删除的数据如何恢复

@@ -10,14 +10,21 @@ import cn.edu.thssdb.schema.Entry;
 import cn.edu.thssdb.type.ColumnType;
 
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 public class Listener extends SQLBaseListener{
-    ArrayList<MultipleCondition> whereConditions = new ArrayList<>();	// 存储where条件
-    ArrayList<MultipleCondition> onConditions = new ArrayList<>();		// 存储on条件
-    ArrayList<Statement> statements = new ArrayList<>();				// 全部statement
-    ArrayList<Column> create_columns = new ArrayList<>();               // create时存储column
-    ArrayList<String> duplicate_columns_check = new ArrayList<>();      // 帮助检查是否重名
-    ArrayList<SyntaxErrorException> syntaxErrorExceptions = new ArrayList<>();  // 记录一次statement解析过程中的语法错误
+    private ArrayList<MultipleCondition> whereConditions = new ArrayList<>();	// 存储where条件
+    private ArrayList<MultipleCondition> onConditions = new ArrayList<>();		// 存储on条件
+    private ArrayList<Statement> statements = new ArrayList<>();				// 全部statement
+    private ArrayList<Column> create_columns = new ArrayList<>();               // create时存储column
+    private ArrayList<String> duplicate_columns_check = new ArrayList<>();      // 帮助检查是否重名
+    private ArrayList<SyntaxErrorException> syntaxErrorExceptions = new ArrayList<>();  // 记录一次statement解析过程中的语法错误
+    private MultipleCondition default_condition = new MultipleCondition(MultipleCondition.OP_TYPE.eq,
+            new ComparerData(new Entry(1)), new ComparerData(new Entry(1)));
+    /**获取解析之后的statement*/
+    public ArrayList<Statement> getStatements(){
+        return statements;
+    }
 
     @Override
     public void enterDrop_db_stmt(SQLParser.Drop_db_stmtContext ctx) {
@@ -145,6 +152,8 @@ public class Listener extends SQLBaseListener{
             syntaxErrorExceptions.clear();  // 清空错误集合
         }
         statements.add(create_table);
+        create_columns.clear();
+        duplicate_columns_check.clear();
     }
 
     // insert_table_stmt
@@ -158,10 +167,10 @@ public class Listener extends SQLBaseListener{
         for(SQLParser.Column_nameContext name : ctx.column_name()){
             columns_name.add(name.getText().toUpperCase());
         }
-        for(SQLParser.Value_entryContext value : ctx.value_entry()){
+        for(SQLParser.Literal_valueContext value : ctx.literal_value()){
             values.add(value.getText());
         }
-        if(columns_name.size() != values.size()){
+        if(columns_name.size() != 0 && columns_name.size() != values.size()){   // 存在columns, 但与values不等
             insert_table = new InsertTableStatement();
             insert_table.setValid(false);
             insert_table.setMessage("columns doesn't equal to values");
@@ -183,15 +192,15 @@ public class Listener extends SQLBaseListener{
         regexs.add(".\\d+([eE][-+]?\\d+)?");    // double
         // TODO 这里可能有问题
         try {
-            if (regexs.get(0).matches(value)) {
+            if (Pattern.matches(regexs.get(0),value)) {
                 comparer = new ComparerData();
-            } else if (regexs.get(1).matches(value)) {
+            } else if (Pattern.matches(regexs.get(1),value)) {
                 comparer = new ComparerData(new Entry(value.substring(1, value.length() - 1)));
-            } else if (regexs.get(2).matches(value)) {
+            } else if (Pattern.matches(regexs.get(2),value)) {
                 comparer = new ComparerData(new Entry(Integer.parseInt(value)));
-            } else if (regexs.get(3).matches(value)) {
+            } else if (Pattern.matches(regexs.get(3),value)) {
                 comparer = new ComparerData(new Entry(Double.parseDouble(value)));
-            } else if (regexs.get(4).matches(value)) {
+            } else if (Pattern.matches(regexs.get(4),value)) {
                 comparer = new ComparerData(new Entry(Double.parseDouble(value)));
             } else {
                 syntaxErrorExceptions.add(new SyntaxErrorException("unexpected value type"));
@@ -206,22 +215,22 @@ public class Listener extends SQLBaseListener{
         comp = comp.toUpperCase();
         MultipleCondition.OP_TYPE comparator = MultipleCondition.OP_TYPE.eq;
         switch (comp) {
-            case "EQ":
+            case "=":
                 comparator = MultipleCondition.OP_TYPE.eq;
                 break;
-            case "NE":
+            case "<>":
                 comparator = MultipleCondition.OP_TYPE.ne;
                 break;
-            case "LE":
+            case "<=":
                 comparator = MultipleCondition.OP_TYPE.le;
                 break;
-            case "GE":
+            case ">=":
                 comparator = MultipleCondition.OP_TYPE.ge;
                 break;
-            case "LT":
+            case "<":
                 comparator = MultipleCondition.OP_TYPE.lt;
                 break;
-            case "GT":
+            case ">":
                 comparator = MultipleCondition.OP_TYPE.gt;
                 break;
             default:
@@ -262,6 +271,8 @@ public class Listener extends SQLBaseListener{
         Statement delete_row;
         if(syntaxErrorExceptions.isEmpty()){
             String table_name = ctx.table_name().getText().toUpperCase();
+            if (whereConditions.isEmpty())  // 没有where选择
+                whereConditions.add(default_condition);
             delete_row = new DeleteTableStatement(table_name, whereConditions.get(0));
         }else{  // 有语法错误
             delete_row = new DeleteTableStatement();
@@ -274,6 +285,7 @@ public class Listener extends SQLBaseListener{
             syntaxErrorExceptions.clear();  // 清空错误集合
         }
         statements.add(delete_row);
+        whereConditions.clear();
     }
 
     // update_table_stmt
@@ -285,6 +297,8 @@ public class Listener extends SQLBaseListener{
             String columnName = ctx.column_name().getText().toUpperCase();
             String value = ctx.literal_value().getText();
             ComparerData comparerData = getFromLiteral_value(value);
+            if (whereConditions.isEmpty())  // where为空时
+                whereConditions.add(default_condition);
             update_row = new UpdateTableStatement(tableName, columnName, comparerData, whereConditions.get(0));
         }else{
             update_row = new UpdateTableStatement();
@@ -297,6 +311,7 @@ public class Listener extends SQLBaseListener{
             syntaxErrorExceptions.clear();  // 清空错误集合
         }
         statements.add(update_row);
+        whereConditions.clear();
     }
 
     // select_table_stmt
@@ -336,6 +351,8 @@ public class Listener extends SQLBaseListener{
                 }
             }
 
+            if (whereConditions.isEmpty()) // where为空
+                whereConditions.add(default_condition);
             ArrayList<String> table_name = new ArrayList<>();
             if(ctx.table_query().getChildCount() > 1){
                 for(SQLParser.Table_nameContext table_nameContext : ctx.table_query().table_name()){
@@ -358,5 +375,7 @@ public class Listener extends SQLBaseListener{
             syntaxErrorExceptions.clear();  // 清空错误集合
         }
         statements.add(select_row);
+        onConditions.clear();
+        whereConditions.clear();
     }
 }

@@ -1,12 +1,11 @@
 grammar SQL;
 
 parse :
-    sql_stmt_list ;
+    sql_stmt_list* EOF;
 
 sql_stmt_list :
     ';'* sql_stmt ( ';'+ sql_stmt )* ';'* ;
 
-/** commit和rollback*/
 sql_stmt :
     create_table_stmt
     | create_db_stmt
@@ -21,15 +20,16 @@ sql_stmt :
     | use_db_stmt
     | update_stmt;
 
-create_db_stmt :
-    K_CREATE K_DATABASE database_name ;
+create_db_stmt
+: K_CREATE K_DATABASE database_name ;
 
-drop_db_stmt :
-    K_DROP K_DATABASE ( K_IF K_EXISTS )? database_name ;
+drop_db_stmt
+: K_DROP K_DATABASE ( K_IF K_EXISTS )? database_name ;
 
-create_table_stmt :
-    K_CREATE K_TABLE table_name
-        '(' column_def ( ',' column_def )* ( ',' table_constraint )? ')' ;
+create_table_stmt
+: K_CREATE K_TABLE
+    table_name
+    '(' column_def ( ',' column_def )* ( ',' table_constraint )? ')' ;
 
 show_meta_stmt :
     K_SHOW K_TABLE table_name ;
@@ -51,10 +51,7 @@ show_table_stmt :
 
 insert_stmt :
     K_INSERT K_INTO table_name ( '(' column_name ( ',' column_name )* ')' )?
-        K_VALUES value_entry ( ',' value_entry )* ;
-
-value_entry :
-    '(' literal_value ( ',' literal_value )* ')' ;
+        K_VALUES  '(' literal_value ( ',' literal_value )* ')' ;
 
 select_stmt :
     K_SELECT ( K_DISTINCT | K_ALL )? result_column ( ',' result_column )*

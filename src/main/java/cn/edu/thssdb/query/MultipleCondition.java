@@ -4,6 +4,7 @@ package cn.edu.thssdb.query;
 import cn.edu.thssdb.schema.Entry;
 import cn.edu.thssdb.schema.Row;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MultipleCondition {
@@ -12,9 +13,9 @@ public class MultipleCondition {
     }
 
     private OP_TYPE comparator;
-    private List<ComparerData> comparerDataList;    // 2个comparer比较
-    private List<MetaInfo> metaInfos;
-    private List<Integer> index;
+    private ArrayList<ComparerData> comparerDataList = new ArrayList<>();    // 2个comparer比较
+    private ArrayList<MetaInfo> metaInfos = new ArrayList<>();
+    private ArrayList<Integer> index = new ArrayList<>();
     private int comp_index = 0;         // 当只有一个comp时, 记录comp出现的位置
 
     public MultipleCondition(OP_TYPE op_type, ComparerData com1, ComparerData com2){
@@ -27,6 +28,10 @@ public class MultipleCondition {
      * 补丁: 因为初期获取不了metaInfo*/
     public void setMetaInfos(MetaInfo meta){
         this.metaInfos.add(meta);
+    }
+
+    public void setComparator(ArrayList<ComparerData> comparerDataList){
+        this.comparerDataList = comparerDataList;
     }
 
     public List<MetaInfo> getMetaInfos() {
@@ -65,7 +70,7 @@ public class MultipleCondition {
      * */
     public int getTypes(){  // compare的类型,
         int count = 0;
-        int i=0;
+        int i = 0;
         for(ComparerData comp : comparerDataList){
             if(comp.getComparerType() == ComparerData.COMPARER_TYPE.table_column){
                 count++;

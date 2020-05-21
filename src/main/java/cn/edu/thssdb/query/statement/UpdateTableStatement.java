@@ -71,7 +71,7 @@ public class UpdateTableStatement extends Statement {
     @Override
     public Result execute(Manager manager) throws RuntimeException {
         /** set MetoInfo 到multipleCondition*/
-        DeleteTableStatement.setMetaInfo(manager, multipleCondition);
+        DeleteTableStatement.setMetaInfo(tableName, manager, multipleCondition);
 
         /** next */
         String msg = "[update table]: " + this.tableName;
@@ -82,46 +82,52 @@ public class UpdateTableStatement extends Statement {
         MetaInfo mt = new MetaInfo(tableName, table.getColumns());
         int idx = mt.columnFind(columnName);
         if(checkLegal(idx, table)){
-            int type = multipleCondition.getTypes();
             try {
-                switch (type) {
-                    case 0: {
-                        if (multipleCondition.calculate()) {
-                            // 全部满足
+                if(multipleCondition.check()) {
+                    int type = multipleCondition.getTypes();
+                    switch (type) {
+                        case 0: {
+                            if (multipleCondition.calculate()) {
+                                // 全部满足
+                                while (iterator.hasNext()) {
+                                    ArrayList<Entry> entries = iterator.next().getEntries();
+                                    entries.set(idx, value.getData());
+                                    Row tmp = new Row(entries.toArray(new Entry[0]));
+                                    table.update(tmp);
+                                    times++;
+                                }
+                            }
+                        }
+                        case 1: {
                             while (iterator.hasNext()) {
-                                ArrayList<Entry> entries = iterator.next().getEntries();
-                                entries.set(idx, value.getData());
-                                Row tmp = new Row(entries.toArray(new Entry[0]));
-                                table.update(tmp);
-                                times++;
+                                Row row = iterator.next();
+                                if (multipleCondition.calculate(row)) {
+                                    ArrayList<Entry> entries = row.getEntries();
+                                    entries.set(idx, value.getData());
+                                    Row tmp = new Row(entries.toArray(new Entry[0]));
+                                    table.update(tmp);
+                                    times++;
+                                }
                             }
                         }
-                    }
-                    case 1: {
-                        while (iterator.hasNext()) {
-                            if (multipleCondition.calculate(iterator.next())) {
-                                ArrayList<Entry> entries = iterator.next().getEntries();
-                                entries.set(idx, value.getData());
-                                Row tmp = new Row(entries.toArray(new Entry[0]));
-                                table.update(tmp);
-                                times++;
+                        case 2: {
+                            while (iterator.hasNext()) {
+                                Row temp = iterator.next();
+                                if (multipleCondition.calculate(temp, temp)) {
+                                    ArrayList<Entry> entries = temp.getEntries();
+                                    entries.set(idx, value.getData());
+                                    Row tmp = new Row(entries.toArray(new Entry[0]));
+                                    table.update(tmp);
+                                    times++;
+                                }
                             }
                         }
+                        default:
+                            break;
                     }
-                    case 2: {
-                        while (iterator.hasNext()) {
-                            Row temp = iterator.next();
-                            if (multipleCondition.calculate(temp, temp)) {
-                                ArrayList<Entry> entries = iterator.next().getEntries();
-                                entries.set(idx, value.getData());
-                                Row tmp = new Row(entries.toArray(new Entry[0]));
-                                table.update(tmp);
-                                times++;
-                            }
-                        }
-                    }
-                    default:
-                        break;
+                }else{
+                    // multipleCondition形式不正确
+                    throw new RuntimeException("condition conflict");
                 }
                 result = Result.setMessage("Successfully " + msg + ", update " + times + "rows");
             }catch (IOException e){

@@ -36,7 +36,8 @@ public class SelectTableStatement extends Statement {
     private boolean checkLegal(Table table) {
         ArrayList<Column> columns =  table.getColumns();
         if (isAll) {
-            // 若 select * 就不用考虑
+            // 若 select * 就直接把所有的columns加入
+            columnList = columns;
             return true;
         } else {
             columnList = new ArrayList<>();
@@ -74,7 +75,7 @@ public class SelectTableStatement extends Statement {
             int len = columnIndex.size();
             Entry[] entries = new Entry[len];
             for (int i = 0; i < len; i++) {
-                entries[i] = row.getEntries().get(i);
+                entries[i] = row.getEntries().get(columnIndex.get(i));
             }
             result.addRow(new Row(entries), isDistinct);
         }
@@ -83,38 +84,43 @@ public class SelectTableStatement extends Statement {
     @Override
     public Result execute(Manager manager) throws RuntimeException {
         /** set MetaInfo 到multipleCondition*/
-        DeleteTableStatement.setMetaInfo(manager, whereCondition);
+        DeleteTableStatement.setMetaInfo(tableName, manager, whereCondition);
 
         /** next */
 
         String msg = "[select table]: " + this.tableName;
         Table table = manager.getCurrentDB().selectTable(tableName);
         result = new Result();
-        int type = whereCondition.getTypes();
 
         // 获取where满足条件的row, 并筛选到result
         if (checkLegal(table)) {
             try {
-                for (Row row : table) {
-                    switch (type) {
-                        case 0:
-                            if (whereCondition.calculate()) {
-                                addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex, this.isDistinct);
-                            }
-                            break;
-                        case 1:
-                            if (whereCondition.calculate(row)) {
-                                addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex, this.isDistinct);
-                            }
-                            break;
-                        case 2:
-                            if (whereCondition.calculate(row, row)) {
-                                addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex, this.isDistinct);
-                            }
-                            break;
-                        default:
-                            break;
+                if(whereCondition.check()) {
+                    int type = whereCondition.getTypes();
+                    for (Row row : table) {
+                        switch (type) {
+                            case 0:
+                                if (whereCondition.calculate()) {
+                                    addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex, this.isDistinct);
+                                }
+                                break;
+                            case 1:
+                                if (whereCondition.calculate(row)) {
+                                    addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex, this.isDistinct);
+                                }
+                                break;
+                            case 2:
+                                if (whereCondition.calculate(row, row)) {
+                                    addRow2ResultAfterSelectColumns(row, isAll, result, columnIndex, this.isDistinct);
+                                }
+                                break;
+                            default:
+                                break;
+                        }
                     }
+                }else{
+                    // multipleCondition形式不正确
+                    throw new RuntimeException("condition conflict");
                 }
             } catch (Exception e) {
                 throw new RuntimeException("fail to " + msg + e.getMessage());

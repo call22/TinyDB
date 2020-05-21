@@ -1,4 +1,5 @@
-package cn.edu.thssdb.parser;// Generated from .\SQL.g4 by ANTLR 4.7.1
+// Generated from C:/Users/龙龙/Documents/大三下学期/数据库原理/作业/大作业/TinyDB/src/main/java/cn/edu/thssdb/parser\SQL.g4 by ANTLR 4.8
+package cn.edu.thssdb.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -136,16 +137,6 @@ public interface SQLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitInsert_stmt(SQLParser.Insert_stmtContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link SQLParser#value_entry}.
-	 * @param ctx the parse tree
-	 */
-	void enterValue_entry(SQLParser.Value_entryContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link SQLParser#value_entry}.
-	 * @param ctx the parse tree
-	 */
-	void exitValue_entry(SQLParser.Value_entryContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link SQLParser#select_stmt}.
 	 * @param ctx the parse tree

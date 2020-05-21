@@ -17,11 +17,10 @@ public class InsertTableStatement extends Statement {
 
     public InsertTableStatement(String tableName, ArrayList<String> columnsName, ArrayList<String> rowValue){
         this.tableName = tableName;
-        this.columnsName = columnsName;
         this.rowValue = rowValue;
+        this.columnsName = columnsName;     // 考虑此为空的情况
     }
 
-    // 根据给定的值运行插入操作, 此处保证len(columnsName) == len(rowValue)
     @Override
     public Result execute(Manager manager) throws RuntimeException {
         Result result;
@@ -30,6 +29,13 @@ public class InsertTableStatement extends Statement {
         try {
             Table table = db.selectTable(tableName);
             ArrayList<Column> columns = table.getColumns();
+            // 考虑columnName为空时, 将columns名称补全到columnName
+            if (this.columnsName.isEmpty()){
+                for(Column column : columns){
+                    this.columnsName.add(column.getName());
+                }
+            }
+
             int len = columns.size();
             Entry[] entries = new Entry[len];
             for(Column column : columns) {
@@ -37,6 +43,7 @@ public class InsertTableStatement extends Statement {
                 if (index == -1)    // 不存在就跳过,为null
                     continue;
                 String rawValue = rowValue.get(index);
+                // 对于string类型, 要去掉''
                 switch (column.getType()) {
                     case INT:
                         entries[index] = new Entry(Integer.parseInt(rawValue));
@@ -51,7 +58,7 @@ public class InsertTableStatement extends Statement {
                         entries[index] = new Entry(Double.parseDouble(rawValue));
                         break;
                     case STRING:
-                        entries[index] = new Entry(rawValue);
+                        entries[index] = new Entry(rawValue.substring(1, rawValue.length()-1));
                         break;
                     default:
                         entries[index] = null;

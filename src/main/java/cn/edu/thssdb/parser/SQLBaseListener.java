@@ -1,6 +1,6 @@
-package cn.edu.thssdb.parser;// Generated from .\SQL.g4 by ANTLR 4.7.1
+// Generated from C:/Users/龙龙/Documents/大三下学期/数据库原理/作业/大作业/TinyDB/src/main/java/cn/edu/thssdb/parser\SQL.g4 by ANTLR 4.8
+package cn.edu.thssdb.parser;
 
-import cn.edu.thssdb.parser.SQLListener;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -167,18 +167,6 @@ public class SQLBaseListener implements SQLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitInsert_stmt(SQLParser.Insert_stmtContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterValue_entry(SQLParser.Value_entryContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitValue_entry(SQLParser.Value_entryContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

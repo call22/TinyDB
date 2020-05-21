@@ -27,6 +27,7 @@ public class IServiceHandler implements IService.Iface {
   @Override
   public ConnectResp connect(ConnectReq req) throws TException {
     // TODO
+
     return null;
   }
 
@@ -38,7 +39,8 @@ public class IServiceHandler implements IService.Iface {
 
   @Override
   public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
+    ExecuteStatementResp resp = new ExecuteStatementResp();
     // TODO
-    return null;
+    return resp;
   }
 }

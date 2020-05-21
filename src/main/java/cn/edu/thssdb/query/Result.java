@@ -25,7 +25,7 @@ public class Result {
     }
 
     public void setColumns(Column[] columns) {
-        this.columns = (ArrayList<Column>) Arrays.asList(columns);
+        this.columns = new ArrayList<Column> (Arrays.asList(columns));
     }
 
     public void setColumns(ArrayList<Column> columns) {
@@ -42,16 +42,9 @@ public class Result {
         for (Column column : columns) {
             builder.append("| ");
             builder.append(column.getName());
-            if (column.getType() != ColumnType.STRING) {
-                builder.append("    ");
-            } else {
-                int length = Math.max(0, column.getMaxLength() - column.getName().length());
-                for (int i = 0; i < length; i++) {
-                    builder.append(" ");
-                }
-            }
         }
         builder.append("|\n");
+        builder.append("================================\n");
         // print rows
         for (Row row : rows) {
             builder.append(row.toString());
