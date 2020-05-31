@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Table implements Iterable<Row> {
-  ReentrantReadWriteLock lock;
+  public ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private String databaseName;
   private String tableName;
   private ArrayList<Column> columns;
@@ -125,7 +125,7 @@ public class Table implements Iterable<Row> {
     ArrayList<Entry> entries = row.getEntries();
     int i = 0;
     for (Column column : columns) {
-      if(column.getNull() && entries.get(i) == null) { // 不能是null约束
+      if (column.getNull() && entries.get(i) == null) { // 不能是null约束
         throw new IOException("can not satify NULL constraint");
       }
       i++;
@@ -135,8 +135,7 @@ public class Table implements Iterable<Row> {
     if (!hasPrimaryKey) {
       row.getEntries().add(0, new Entry(uniqueID));
       uniqueID++;
-    }
-    else if (isMultiPrimaryKey) {
+    } else if (isMultiPrimaryKey) {
       // 插入多键时，使用hashCode唯一映射
       StringBuffer primaryKeyStr = new StringBuffer();
       for (int primaryIndex : primaryIndexList) {
@@ -152,10 +151,9 @@ public class Table implements Iterable<Row> {
 
 
     // 写入单行数据, 若空闲列表非空，插入至空闲位置，否则插入至文件末尾
-    if(freeListPtr == -1) {
+    if (freeListPtr == -1) {
       dataFile.seek((dataFile.length()));
-    }
-    else {
+    } else {
       dataFile.seek(freeListPtr);
       long nextPtr = dataFile.readLong();
       dataFile.seek((freeListPtr));
@@ -168,7 +166,7 @@ public class Table implements Iterable<Row> {
     ByteBuffer buf = ByteBuffer.wrap(bytes);
     int j = 0;
     for (Entry entry : entries) {
-      buf.put( (byte) (entry==null||entry.value == null ? 1 : 0) );
+      buf.put((byte) (entry == null || entry.value == null ? 1 : 0));
       buf.put(byteManager.entryToBytes(entry, columns.get(j)));
       j++;
     }
@@ -180,6 +178,7 @@ public class Table implements Iterable<Row> {
     writeDataFileHeader();
   }
 
+
   /**
    * 查询一行数据
    *
@@ -188,31 +187,35 @@ public class Table implements Iterable<Row> {
    * @throws IOException
    */
   public Row search(Entry entry) throws IOException{
-    Long position = index.get(entry);
-    // 定位到文件指定位置
-    dataFile.seek(position);
-    // 读取原生bytes
-    ByteManager byteManager = new ByteManager();
-    byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)];
-    dataFile.read(bytes);
-    // 从bytes转换为row
-    ByteBuffer buf = ByteBuffer.wrap(bytes);
-    Entry[] entries = new Entry[columns.size()];
-    int i = 0;
-    for (Column column : columns) {
-      // 获取是否为空信息 与 entry的byte信息
-      byte isNull = buf.get();
-      byte[] entryByteValue = new byte[byteManager.getColumnTypeByteSize(column)];
-      buf.get(entryByteValue);
-      if (isNull == 1) {
-        entries[i] = null;
+    lock.readLock().lock();
+    try {
+      Long position = index.get(entry);
+      // 定位到文件指定位置
+      dataFile.seek(position);
+      // 读取原生bytes
+      ByteManager byteManager = new ByteManager();
+      byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)];
+      dataFile.read(bytes);
+      // 从bytes转换为row
+      ByteBuffer buf = ByteBuffer.wrap(bytes);
+      Entry[] entries = new Entry[columns.size()];
+      int i = 0;
+      for (Column column : columns) {
+        // 获取是否为空信息 与 entry的byte信息
+        byte isNull = buf.get();
+        byte[] entryByteValue = new byte[byteManager.getColumnTypeByteSize(column)];
+        buf.get(entryByteValue);
+        if (isNull == 1) {
+          entries[i] = null;
+        } else {
+          entries[i] = byteManager.bytesToEntry(entryByteValue, column);
+        }
+        i++;
       }
-      else {
-        entries[i] = byteManager.bytesToEntry(entryByteValue, column);
-      }
-      i++;
+      return new Row(entries);
+    } finally {
+      lock.readLock().unlock();
     }
-    return new Row(entries);
   }
 
   /**
@@ -222,16 +225,21 @@ public class Table implements Iterable<Row> {
    * @throws IOException
    */
   public void delete(Row row) throws IOException {
-    Entry primaryEntry = row.getEntries().get(primaryIndex);
-    Long position = index.get(primaryEntry);
-    // 先删除索引
-    index.remove(primaryEntry);
-    // 把数据文件覆盖为空闲列表指针
-    dataFile.seek(position);
-    dataFile.writeLong(freeListPtr);
-    freeListPtr = position;
-    // 修改文件头
-    writeDataFileHeader();
+    lock.writeLock().lock();
+    try {
+      Entry primaryEntry = row.getEntries().get(primaryIndex);
+      Long position = index.get(primaryEntry);
+      // 先删除索引
+      index.remove(primaryEntry);
+      // 把数据文件覆盖为空闲列表指针
+      dataFile.seek(position);
+      dataFile.writeLong(freeListPtr);
+      freeListPtr = position;
+      // 修改文件头
+      writeDataFileHeader();
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   /**
@@ -287,7 +295,6 @@ public class Table implements Iterable<Row> {
     File idxFile= new File( idxfilePath);
     idxFile.delete();
     tableDir.delete();
-
   }
 
   /**

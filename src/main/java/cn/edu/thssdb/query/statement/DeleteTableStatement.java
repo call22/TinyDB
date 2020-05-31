@@ -5,6 +5,7 @@ import cn.edu.thssdb.query.MetaInfo;
 import cn.edu.thssdb.query.MultipleCondition;
 import cn.edu.thssdb.query.Result;
 import cn.edu.thssdb.schema.*;
+import cn.edu.thssdb.utils.LogManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class DeleteTableStatement extends Statement {
         try{
             int times = 0;
             Table table = db.selectTable(tableName);
+            LogManager.addWritelock(table.lock.writeLock());
             Iterator<Row> iterator = table.iterator();
             if(multipleCondition.check()){
                 int type = multipleCondition.getTypes();
@@ -72,10 +74,12 @@ public class DeleteTableStatement extends Statement {
                 }
             }else{
                 // multipleCondition形式不正确
+                LogManager.removeWritelock();
                 throw new RuntimeException("condition conflict");
             }
             result = Result.setMessage("Successfully" + msg + ", delete " + times +" rows");
         }catch (IOException e){
+            LogManager.removeWritelock();
             throw new RuntimeException("fail to " + msg + e.getMessage());
         }
         return result;

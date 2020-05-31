@@ -2,6 +2,7 @@ package cn.edu.thssdb.query.statement;
 
 import cn.edu.thssdb.query.Result;
 import cn.edu.thssdb.schema.*;
+import cn.edu.thssdb.utils.LogManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class InsertTableStatement extends Statement {
         Database db = manager.getCurrentDB();
         try {
             Table table = db.selectTable(tableName);
+            LogManager.addWritelock(table.lock.writeLock());
             ArrayList<Column> columns = table.getColumns();
             // 考虑columnName为空时, 将columns名称补全到columnName
             if (this.columnsName.isEmpty()){
@@ -68,11 +70,12 @@ public class InsertTableStatement extends Statement {
             table.insert(new Row(entries));
             result = Result.setMessage("Successfully " + msg);
         } catch (NumberFormatException e) {
+            LogManager.removeWritelock();
             throw new RuntimeException("Fail to " + msg + "entry type format error");
         } catch (IOException e) {
-            throw new RuntimeException("Fail to " + msg + e.getMessage());
+          LogManager.removeWritelock();
+          throw new RuntimeException("Fail to " + msg + e.getMessage());
         }
-
       return result;
     }
 }
