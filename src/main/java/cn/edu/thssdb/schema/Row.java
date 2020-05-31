@@ -25,12 +25,21 @@ public class Row implements Serializable {
     this.entries.addAll(entries);
   }
 
+  @Override
   public String toString() {
     if (entries == null)
       return "EMPTY";
-    StringJoiner sj = new StringJoiner(", ");
-    for (Entry e : entries)
-      sj.add(e.toString());
-    return sj.toString();
+
+    StringBuilder builder = new StringBuilder();
+    builder.append("| ");
+    for(Entry e : entries){
+      if(e==null){
+        builder.append("null").append(" | ");
+      }else{
+        builder.append(e.toString()).append(" | ");
+      }
+    }
+    return builder.toString();
   }
+
 }

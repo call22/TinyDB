@@ -1,7 +1,7 @@
 grammar SQL;
 
 parse :
-    sql_stmt_list ;
+    sql_stmt_list* EOF?;
 
 sql_stmt_list :
     ';'* sql_stmt ( ';'+ sql_stmt )* ';'* ;
@@ -9,48 +9,38 @@ sql_stmt_list :
 sql_stmt :
     create_table_stmt
     | create_db_stmt
-    | create_user_stmt
     | drop_db_stmt
-    | drop_user_stmt
     | delete_stmt
     | drop_table_stmt
     | insert_stmt
     | select_stmt
-    | create_view_stmt
-    | drop_view_stmt
-    | grant_stmt
-    | revoke_stmt
-    | use_db_stmt
     | show_db_stmt
     | show_table_stmt
     | show_meta_stmt
-    | quit_stmt
-    | update_stmt ;
+    | use_db_stmt
+    | update_stmt
+    | commit_stmt
+    | begin_transaction_stmt;
 
-create_db_stmt :
-    K_CREATE K_DATABASE database_name ;
+begin_transaction_stmt
+: K_BEGIN K_TRANSACTION;
 
-drop_db_stmt :
-    K_DROP K_DATABASE ( K_IF K_EXISTS )? database_name ;
+commit_stmt
+: K_COMMIT;
 
-create_user_stmt :
-    K_CREATE K_USER user_name K_IDENTIFIED K_BY password ;
+create_db_stmt
+: K_CREATE K_DATABASE database_name ;
 
-drop_user_stmt :
-    K_DROP K_USER ( K_IF K_EXISTS )? user_name ;
+drop_db_stmt
+: K_DROP K_DATABASE ( K_IF K_EXISTS )? database_name ;
 
-create_table_stmt :
-    K_CREATE K_TABLE table_name
-        '(' column_def ( ',' column_def )* ( ',' table_constraint )? ')' ;
+create_table_stmt
+: K_CREATE K_TABLE
+    table_name
+    '(' column_def ( ',' column_def )* ( ',' table_constraint )? ')' ;
 
 show_meta_stmt :
     K_SHOW K_TABLE table_name ;
-
-grant_stmt :
-    K_GRANT auth_level ( ',' auth_level )* K_ON table_name K_TO user_name ;
-
-revoke_stmt :
-    K_REVOKE auth_level ( ',' auth_level )* K_ON table_name K_FROM user_name ;
 
 use_db_stmt :
     K_USE database_name;
@@ -64,32 +54,20 @@ drop_table_stmt :
 show_db_stmt :
     K_SHOW K_DATABASES;
 
-quit_stmt :
-    K_QUIT;
-
 show_table_stmt :
     K_SHOW K_DATABASE database_name;
 
 insert_stmt :
     K_INSERT K_INTO table_name ( '(' column_name ( ',' column_name )* ')' )?
-        K_VALUES value_entry ( ',' value_entry )* ;
-
-value_entry :
-    '(' literal_value ( ',' literal_value )* ')' ;
+        K_VALUES  '(' literal_value ( ',' literal_value )* ')' ;
 
 select_stmt :
     K_SELECT ( K_DISTINCT | K_ALL )? result_column ( ',' result_column )*
-        K_FROM table_query ( ',' table_query )* ( K_WHERE multiple_condition )? ;
-
-create_view_stmt :
-    K_CREATE K_VIEW view_name K_AS select_stmt ;
-
-drop_view_stmt :
-    K_DROP K_VIEW ( K_IF K_EXISTS )? view_name ;
+        K_FROM table_query ( K_WHERE multiple_condition )? ;
 
 update_stmt :
     K_UPDATE table_name
-        K_SET column_name '=' expression ( K_WHERE multiple_condition )? ;
+        K_SET column_name '=' literal_value ( K_WHERE multiple_condition )? ;
 
 column_def :
     column_name type_name column_constraint* ;
@@ -106,12 +84,7 @@ column_constraint :
     | K_NOT K_NULL ;
 
 multiple_condition :
-    condition
-    | multiple_condition AND multiple_condition
-    | multiple_condition OR multiple_condition ;
-
-condition :
-    expression comparator expression;
+    comparer comparator comparer;
 
 comparer :
     column_full_name
@@ -120,26 +93,16 @@ comparer :
 comparator :
     EQ | NE | LE | GE | LT | GT ;
 
-expression :
-    comparer
-    | expression ( MUL | DIV ) expression
-    | expression ( ADD | SUB ) expression
-    | '(' expression ')';
-
 table_constraint :
     K_PRIMARY K_KEY '(' column_name (',' column_name)* ')' ;
 
 result_column
     : '*'
-    | table_name '.' '*'
     | column_full_name;
 
 table_query :
     table_name
-    | table_name ( K_JOIN table_name )+ K_ON multiple_condition ;
-
-auth_level :
-    K_SELECT | K_INSERT | K_UPDATE | K_DELETE | K_DROP ;
+    | table_name  K_JOIN table_name  K_ON multiple_condition ;  // 支持2个表单join
 
 literal_value :
     NUMERIC_LITERAL
@@ -155,17 +118,8 @@ database_name :
 table_name :
     IDENTIFIER ;
 
-user_name :
-    IDENTIFIER ;
-
 column_name :
     IDENTIFIER ;
-
-view_name :
-    IDENTIFIER;
-
-password :
-    STRING_LITERAL ;
 
 EQ : '=';
 NE : '<>';
@@ -173,14 +127,6 @@ LT : '<';
 GT : '>';
 LE : '<=';
 GE : '>=';
-
-ADD : '+';
-SUB : '-';
-MUL : '*';
-DIV : '/';
-
-AND : '&&';
-OR : '||';
 
 T_INT : I N T;
 T_LONG : L O N G;
@@ -225,6 +171,11 @@ K_USER : U S E R;
 K_VALUES : V A L U E S;
 K_VIEW : V I E W;
 K_WHERE : W H E R E;
+// 事务
+K_COMMIT : C O M M I T;
+K_TRANSACTION : T R A N S A C T I O N;
+K_BEGIN : B E G I N;
+
 
 IDENTIFIER :
     [a-zA-Z_] [a-zA-Z_0-9]* ;
@@ -240,14 +191,6 @@ EXPONENT :
 STRING_LITERAL :
     '\'' ( ~'\'' | '\'\'' )* '\'' ;
 
-SINGLE_LINE_COMMENT :
-    '--' ~[\r\n]* -> channel(HIDDEN) ;
-
-MULTILINE_COMMENT :
-    '/*' .*? ( '*/' | EOF ) -> channel(HIDDEN) ;
-
-SPACES :
-    [ \u000B\t\r\n] -> channel(HIDDEN) ;
 
 fragment DIGIT : [0-9] ;
 fragment A : [aA] ;

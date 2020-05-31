@@ -1,10 +1,14 @@
 package cn.edu.thssdb.schema;
 
+import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.index.BPlusTree;
 import cn.edu.thssdb.type.ByteManager;
 import cn.edu.thssdb.type.ColumnType;
+import cn.edu.thssdb.utils.Global;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import javafx.util.Pair;
 
+import javax.management.openmbean.KeyAlreadyExistsException;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -15,9 +19,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class Table implements Iterable<Row> {
   ReentrantReadWriteLock lock;
   private String databaseName;
-  public String tableName;
-  public ArrayList<Column> columns;
-  public BPlusTree<Entry, Long> index;
+  private String tableName;
+  private ArrayList<Column> columns;
+  private BPlusTree<Entry, Long> index;
   private int primaryIndex = 0;
   private ArrayList<Integer> primaryIndexList;
 
@@ -29,11 +33,22 @@ public class Table implements Iterable<Row> {
   private boolean hasPrimaryKey = false;                  // 是否含有主键
   private boolean isMultiPrimaryKey = false;              // 是否是多主键
 
+  /**
+   * 创建表单
+   * @param databaseName 所属数据库
+   * @param tableName 表单名称
+   * @param columns 属性list*/
   public Table(String databaseName, String tableName, Column[] columns) throws IOException {
     this.databaseName = databaseName;
-    this.tableName = tableName;
+    this.tableName = tableName.toUpperCase();
     this.columns = new ArrayList<>(Arrays.asList(columns));
     primaryIndexList = new ArrayList<>();
+    java.lang.String tablePath= Global.dirPath+databaseName+"/"+tableName;
+    if(!new File(tablePath).exists()){
+      File Tabledir=new File(tablePath);
+      Tabledir.mkdirs();
+    }
+
 
     // 遍历判断是否含有主键及个数
     int primaryKeyCount = 0;
@@ -53,23 +68,18 @@ public class Table implements Iterable<Row> {
     }
 
     // 若无主键 或 多主键 需要创建master列，便于索引
-    if (!hasPrimaryKey) {
-      Column tmpPrimaryColumn = new Column("IDX", ColumnType.INT, 1, true, -1);
+    if (!hasPrimaryKey || isMultiPrimaryKey) {
+      Column tmpPrimaryColumn = new Column("IDX", ColumnType.INT, true, true, -1);
       this.columns.add(0, tmpPrimaryColumn);
-    }
-    else if (isMultiPrimaryKey) {
-      // TODO: 根据多主键映射函数，修改max-length
-      // 多主键会映射为string
-      Column tmpPrimaryColumn = new Column("IDX", ColumnType.STRING, 1, true, 32);
-      this.columns.add(0, tmpPrimaryColumn);
-    }
-    else {
+    } else {
       primaryIndex = primaryIndexList.get(0);   //单主键时的索引
     }
 
     // 创建或读取数据文件
     String dataFileName = databaseName + "_" + tableName + DATA_EXTENSION;
-    dataFile = new RandomAccessFile(dataFileName, "rw");
+    String filePath= Global.dirPath+databaseName+"/"+tableName+"/"+dataFileName;
+
+    dataFile = new RandomAccessFile(filePath, "rw");
     // 初始化空闲列表和uniqueID - 若文件为空，就写入初始值 | 若非空，就读取
     if (dataFile.length() > Long.BYTES + Integer.BYTES) {
       readDataFileHeader();
@@ -81,15 +91,23 @@ public class Table implements Iterable<Row> {
     // 构建索引树，若文件存有数据，则反序列化读取
     index = new BPlusTree<>();
     String indexFileName = databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION;
-    RandomAccessFile indexFile = new RandomAccessFile(indexFileName, "rw");
+
+    RandomAccessFile indexFile = new RandomAccessFile(tablePath+"/"+indexFileName, "rw");
     if (indexFile.length() > 0) {
       try {
-        deserialize(indexFileName);
+        deserialize(tablePath+"/"+indexFileName);
       } catch (ClassNotFoundException e) {
         e.printStackTrace();
       }
     }
     indexFile.close();
+  }
+  public RandomAccessFile getRAF(){return dataFile;}
+  public ArrayList<Column> getColumns() {
+    return columns;
+  }
+  public String getTableName(){
+    return tableName;
   }
 
   private void recover() {
@@ -100,14 +118,18 @@ public class Table implements Iterable<Row> {
    * 插入一行数据
    *
    * @param row 待插入的行
-   * @throws IOException
+   * @throws IOException 插入错误
    */
   public void insert(Row row) throws IOException {
-    // TODO: 判断是否有NOT_NULL约束, 且是否满足
-    // end
-
-    // TODO: 判断主键是否重复
-    // end
+    // 判断NOT_NULL约束
+    ArrayList<Entry> entries = row.getEntries();
+    int i = 0;
+    for (Column column : columns) {
+      if(column.getNull() && entries.get(i) == null) { // 不能是null约束
+        throw new IOException("can not satify NULL constraint");
+      }
+      i++;
+    }
 
     // 若无主键 或 多主键 在IDX列插入索引值
     if (!hasPrimaryKey) {
@@ -115,8 +137,19 @@ public class Table implements Iterable<Row> {
       uniqueID++;
     }
     else if (isMultiPrimaryKey) {
-      // TODO: 插入多键时，映射函数后的索引值
+      // 插入多键时，使用hashCode唯一映射
+      StringBuffer primaryKeyStr = new StringBuffer();
+      for (int primaryIndex : primaryIndexList) {
+        primaryKeyStr.append(row.getEntries().get(primaryIndex).toString());
+      }
+      row.getEntries().add(0, new Entry(primaryKeyStr.toString().hashCode()));
     }
+
+    // 判断主键是否重复
+    if (index.contains(row.getEntries().get(primaryIndex))) {
+      throw new IOException("Key already exists");
+    }
+
 
     // 写入单行数据, 若空闲列表非空，插入至空闲位置，否则插入至文件末尾
     if(freeListPtr == -1) {
@@ -133,12 +166,11 @@ public class Table implements Iterable<Row> {
     byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)];
     Arrays.fill(bytes, (byte) 0);
     ByteBuffer buf = ByteBuffer.wrap(bytes);
-    ArrayList<Entry> entries = row.getEntries();
-    int i = 0;
+    int j = 0;
     for (Entry entry : entries) {
-      buf.put( (byte) (entry.value == null ? 1 : 0) );
-      buf.put(byteManager.entryToBytes(entry, columns.get(i)));
-      i++;
+      buf.put( (byte) (entry==null||entry.value == null ? 1 : 0) );
+      buf.put(byteManager.entryToBytes(entry, columns.get(j)));
+      j++;
     }
     dataFile.write(bytes);
 
@@ -186,13 +218,14 @@ public class Table implements Iterable<Row> {
   /**
    * 删除一行数据
    *
-   * @param entry 待删除的主键entry
+   * @param row 待删除的一行数据
    * @throws IOException
    */
-  public void delete(Entry entry) throws IOException {
-    Long position = index.get(entry);
+  public void delete(Row row) throws IOException {
+    Entry primaryEntry = row.getEntries().get(primaryIndex);
+    Long position = index.get(primaryEntry);
     // 先删除索引
-    index.remove(entry);
+    index.remove(primaryEntry);
     // 把数据文件覆盖为空闲列表指针
     dataFile.seek(position);
     dataFile.writeLong(freeListPtr);
@@ -208,7 +241,7 @@ public class Table implements Iterable<Row> {
    * @throws IOException
    */
   public void update(Row row) throws IOException{
-    delete(row.getEntries().get(primaryIndex));
+    delete(row);
     insert(row);
   }
 
@@ -219,8 +252,10 @@ public class Table implements Iterable<Row> {
    */
   public void serialize() throws IOException {
     String indexFileName = databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION;
-    RandomAccessFile indexFile = new RandomAccessFile(indexFileName, "rw");
-    FileOutputStream fileOut = new FileOutputStream(indexFileName);
+    String idxfilePath= Global.dirPath+databaseName+"/"+tableName+"/"+indexFileName;
+
+    RandomAccessFile indexFile = new RandomAccessFile(idxfilePath, "rw");
+    FileOutputStream fileOut = new FileOutputStream(idxfilePath);
     ObjectOutputStream oos = new ObjectOutputStream(fileOut);
     ArrayList<Pair<Entry, Long>> leafArrayList = new ArrayList<>();
     for (Pair<Entry, Long> leaf : index) {
@@ -230,6 +265,29 @@ public class Table implements Iterable<Row> {
     oos.close();
     fileOut.close();
     indexFile.close();
+  }
+
+  /**
+   * 删除这个表对应的文件
+   *
+   * @throws IOException
+   */
+  public void drop() throws IOException {
+    dataFile.close();;
+    String tablePath=Global.dirPath+databaseName+"/"+tableName;
+    File tableDir=new File(tablePath);
+    String dataFileName = databaseName + "_" + tableName + DATA_EXTENSION;
+    String datafilePath=tablePath+"/"+dataFileName;
+
+    File dFile= new File(datafilePath);
+    dFile.delete();
+    String idxFileName = databaseName + "_" + tableName + "_" + this.columns.get(primaryIndex).getName() +INDEX_EXTENSION;
+    String idxfilePath= tablePath+"/"+idxFileName;
+
+    File idxFile= new File( idxfilePath);
+    idxFile.delete();
+    tableDir.delete();
+
   }
 
   /**
@@ -307,4 +365,150 @@ public class Table implements Iterable<Row> {
   public Iterator<Row> iterator() {
     return new TableIterator(this);
   }
+
+
+  /**
+   * 添加列
+   *
+   * @param column 添加的列
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  public void alterADD(Column column) throws IOException {
+    //已存在这一列
+    if(columns.contains(column)){
+      throw new KeyAlreadyExistsException();
+    }
+    ByteManager byteManager=new ByteManager();
+
+    String tablePath=Global.dirPath+File.separator+databaseName+File.separator+tableName;
+    String newfilename="temp.data";
+    String oldfilename=databaseName + "_" + tableName + DATA_EXTENSION;
+    freeListPtr=-1;
+    File newDataFile=new File(tablePath+File.separator+newfilename);
+    RandomAccessFile newAccess=new RandomAccessFile(tablePath+File.separator+newfilename,"rw");
+    newAccess.writeLong(-1);
+    newAccess.writeInt(uniqueID);
+    for (Pair<Entry, Long> leaf : index) {
+      long ptr=newAccess.getFilePointer();
+
+      byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)+1+byteManager.getColumnTypeByteSize(column)];
+      Arrays.fill(bytes, (byte) 0);
+      ByteBuffer buf = ByteBuffer.wrap(bytes);
+      byte[] oldbytes = new byte[columns.size() + byteManager.columnsByteSize(columns)];
+      dataFile.seek(leaf.getValue());
+      dataFile.read(oldbytes);
+
+      buf.put(oldbytes);
+      buf.put((byte)1);//null
+      for(int k=0;k<byteManager.getColumnTypeByteSize(column);k++){
+        buf.put((byte)0);
+      }
+      newAccess.write(bytes);
+      // 更新索引
+      index.update(leaf.getKey(), ptr);
+    }
+    freeListPtr=-1;
+    columns.add(column);
+    newAccess.close();
+    dataFile.close();
+    dataFile=newAccess;
+
+    File oldFile=new File(tablePath+File.separator+oldfilename);
+    System.gc();
+    boolean deleted=oldFile.delete();
+    File newDFile=new File(tablePath+File.separator+oldfilename);
+    boolean rename=newDataFile.renameTo(newDFile);
+    if(deleted){
+      System.out.print("删除成功\n");
+    }else{
+      System.out.print("删除失败\n");
+    }
+    if(rename){
+      System.out.print("重命名成功\n");
+      //serialize();
+      dataFile=new RandomAccessFile(tablePath+File.separator+oldfilename,"rw");
+    }else{
+      System.out.print("重命名错误\n");
+    }
+  }
+
+  /**
+   * 删除列
+   *
+   * @param columnName 删除的列名(暂不支持删除primary)
+   * @throws IOException
+   * @throws ClassNotFoundException
+   */
+  public void alterDrop(String columnName) throws IOException {
+    //没有这一列或者这一列为主键
+    boolean flag=false;
+    for(Column c :getColumns()){
+      if(c.getName().equals(columnName)){
+        flag=!c.isPrimary();
+      }
+    }
+    if(!flag){
+      throw new KeyNotExistException();
+    }
+
+    ByteManager byteManager=new ByteManager();
+    Column deletedColumn = null;
+    int idx=0;
+    for(Column c:columns){
+
+      if(c.getName().equals(columnName)){
+        deletedColumn=c;
+        break;
+      }
+      idx++;
+    }
+
+    String tablePath=Global.dirPath+File.separator+databaseName+File.separator+tableName;
+    String newfilename="temp.data";
+    String oldfilename=databaseName + "_" + tableName + DATA_EXTENSION;
+    freeListPtr=-1;
+    File newDataFile=new File(tablePath+File.separator+newfilename);
+    RandomAccessFile newAccess=new RandomAccessFile(tablePath+File.separator+newfilename,"rw");
+    newAccess.writeLong(-1);
+    newAccess.writeInt(uniqueID);
+    for(Row r:this){
+
+      long ptr=newAccess.getFilePointer();
+      byte[] bytes = new byte[columns.size() + byteManager.columnsByteSize(columns)-1-byteManager.getColumnTypeByteSize(deletedColumn)];
+      Arrays.fill(bytes, (byte) 0);
+      ByteBuffer buf = ByteBuffer.wrap(bytes);
+      ArrayList<Entry> entries = r.getEntries();
+      int i = 0;
+      for (Entry entry : entries) {
+        if(i!=idx){
+          buf.put( (byte) (entry==null||entry.value == null ? 1 : 0) );
+          buf.put(byteManager.entryToBytes(entry, columns.get(i)));
+        }
+        i++;
+      }
+      newAccess.write(bytes);
+
+      // 更新索引
+      index.update(entries.get(primaryIndex), ptr);
+    }
+    freeListPtr=-1;
+    columns.remove(deletedColumn);
+    newAccess.close();;
+    dataFile.close();;
+    File oldFile=new File(tablePath+File.separator+oldfilename);
+    System.gc();
+    oldFile.delete();
+    File newDFile=new File(tablePath+File.separator+oldfilename);
+    newDataFile.renameTo(newDFile);
+    //serialize();
+    dataFile=new RandomAccessFile(tablePath+File.separator+oldfilename,"rw");
+  }
+
+  @Override
+  public String toString(){
+    return this.tableName + " | " + this.columns.size();
+  }
 }
+
+

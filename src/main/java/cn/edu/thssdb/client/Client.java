@@ -1,7 +1,6 @@
 package cn.edu.thssdb.client;
 
-import cn.edu.thssdb.rpc.thrift.GetTimeReq;
-import cn.edu.thssdb.rpc.thrift.IService;
+import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.utils.Global;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -43,6 +42,8 @@ public class Client {
   private static CommandLine commandLine;
 
   public static void main(String[] args) {
+    Long sessionId = -1L;
+
     commandLine = parseCmd(args);
     if (commandLine.hasOption(HELP_ARGS)) {
       showHelp();
@@ -60,16 +61,39 @@ public class Client {
       while (true) {
         print(Global.CLI_PREFIX);
         String msg = SCANNER.nextLine();
+        // 解析msg
+        /**connect -u xxx  -p xxx;
+         * disconnect;
+         * showtime;
+         * quit;*/
+        String[] strings = msg.split(" ");
         long startTime = System.currentTimeMillis();
-        switch (msg.trim()) {
+        switch (strings[0]) {
           case Global.SHOW_TIME:
             getTime();
             break;
           case Global.QUIT:
             open = false;
             break;
+          case Global.HELP:
+            showHelp();
+            break;
+          case Global.CONNECT:
+            // 判断输入是否正确
+            if(strings.length == 6 && strings[1].equals("-u") && strings[3].equals("-p") && strings[5].equals(";")){
+              String username = strings[2];
+              String password = strings[4];
+              sessionId = connect(username, password);
+            }else{
+              println("invalid statement.");
+            }
+            break;
+          case Global.DISCONNECT:
+            disconnect(sessionId);
+            break;
           default:
-            println("Invalid statements!");
+            // statement
+            executeStatement(msg, sessionId);
             break;
         }
         long endTime = System.currentTimeMillis();
@@ -88,6 +112,71 @@ public class Client {
     GetTimeReq req = new GetTimeReq();
     try {
       println(client.getTime(req).getTime());
+    } catch (TException e) {
+      logger.error(e.getMessage());
+    }
+  }
+
+  /**connect*/
+  private static Long connect(String username, String password) {
+    ConnectReq req = new ConnectReq();
+    Long sessionId = -1L;
+    req.setUsername(username);
+    req.setPassword(password);
+    try{
+      ConnectResp resp = client.connect(req);
+      sessionId = resp.sessionId;
+      if(resp.status.getCode() == Global.FAILURE_CODE){  // 连接出错
+        println("Fail to connect server, please check your username and password\n");
+      }else{  // 连接正常
+        println("Success to connect server\n");
+      }
+    } catch (TException e) {
+      logger.error(e.getMessage());
+    }
+    return sessionId;
+  }
+
+  /**disconnect*/
+  private static void disconnect(Long sessionId) {
+    DisconnetReq req = new DisconnetReq();
+    req.setSessionId(sessionId);
+    try{
+      DisconnetResp resp;
+      resp = client.disconnect(req);
+      if(resp.status.getCode() == Global.FAILURE_CODE){
+        println("Fail to disconnect, please connect first.");
+      }else{
+        println("Success to disconnect.");
+      }
+    } catch (TException e) {
+      logger.error(e.getMessage());
+    }
+  }
+
+  /**statement运行*/
+  private static void executeStatement(String msg, Long sessionId) {
+    ExecuteStatementReq req = new ExecuteStatementReq();
+    req.setSessionId(sessionId);
+    req.setStatement(msg);
+    try{
+      ExecuteStatementResp resp;
+      resp = client.executeStatement(req);
+      if(resp.status.getCode() == Global.FAILURE_CODE){
+        if(resp.isAbort){ // statement解析出错, 但是用户已经登录
+          println("Exception occur during execution.");
+          for(String result : resp.statementsResult){
+            println(result);
+          }
+        }else{  // 用户未登录
+          println("you are not logged in.");
+        }
+      }else{
+        // 运行全部正确
+        for(String result : resp.statementsResult){
+          println(result);
+        }
+      }
     } catch (TException e) {
       logger.error(e.getMessage());
     }
@@ -134,8 +223,16 @@ public class Client {
   }
 
   static void showHelp() {
-    // TODO
-    println("DO IT YOURSELF");
+    println("1. connect to server:");
+    println("connect -u username -p password ;");
+    println("2. execute statement:");
+    println("your statement");
+    println("3. disconnect from server:");
+    println("disconnect;");
+    println("4. show time:");
+    println("showtime;");
+    println("5. quit client");
+    println("quit;");
   }
 
   static void echoStarting() {
@@ -146,10 +243,6 @@ public class Client {
 
   static void print(String msg) {
     SCREEN_PRINTER.print(msg);
-  }
-
-  static void println() {
-    SCREEN_PRINTER.println();
   }
 
   static void println(String msg) {
