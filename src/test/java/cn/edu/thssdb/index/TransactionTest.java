@@ -58,7 +58,7 @@ public class TransactionTest {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    System.out.println("release read lock");
+    System.out.println("search: release read lock");
     System.out.println("result table: ");
     printTestTable(manager.getCurrentDB().selectTable("INSTRUCTOR"));
   }
