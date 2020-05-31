@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Table implements Iterable<Row> {
-  ReentrantReadWriteLock lock;
+  public ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private String databaseName;
   private String tableName;
   private ArrayList<Column> columns;
