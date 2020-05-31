@@ -8,14 +8,14 @@ import cn.edu.thssdb.type.ColumnType;
 
 import java.io.IOException;
 
-public class TransactionTest {
+public class LockTest {
   Column[] testColumnList = {
           new Column("id", ColumnType.INT, true, true, 0),
           new Column("name", ColumnType.STRING, false, true, 16)
   };
   Table testTable = new Table("Test", "instructor", testColumnList);
 
-  public TransactionTest() throws IOException {
+  public LockTest() throws IOException {
   }
 
   public void insertThread() {
@@ -49,7 +49,7 @@ public class TransactionTest {
 
 
   public static void main(String[] args) throws InterruptedException, IOException {
-    TransactionTest readWriteLock = new TransactionTest();
+    LockTest readWriteLock = new LockTest();
     readWriteLock.printTestTable();
     Thread thread1 = new Thread(readWriteLock::insertThread);
     Thread thread2 = new Thread(readWriteLock::searchThread);
