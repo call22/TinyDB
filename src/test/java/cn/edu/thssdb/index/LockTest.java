@@ -38,7 +38,6 @@ public class TransactionTest {
   }
   public void searchThread() {
     System.out.println(Thread.currentThread().getName() + " read start ");
-    testTable.lock.readLock().lock();
       try {
         testTable.search(new Entry(2));
       } catch (IOException e) {
@@ -46,7 +45,6 @@ public class TransactionTest {
       }
     System.out.println(Thread.currentThread().getName() + " read end ");
     printTestTable();
-    testTable.lock.readLock().unlock();
   }
 
 

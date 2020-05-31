@@ -5,6 +5,7 @@ import cn.edu.thssdb.query.MetaInfo;
 import cn.edu.thssdb.query.MultipleCondition;
 import cn.edu.thssdb.query.Result;
 import cn.edu.thssdb.schema.*;
+import cn.edu.thssdb.utils.LogManager;
 import javafx.scene.control.Tab;
 
 import javax.swing.plaf.nimbus.State;
@@ -127,13 +128,16 @@ public class UpdateTableStatement extends Statement {
                     }
                 }else{
                     // multipleCondition形式不正确
+                    LogManager.removeWritelock();
                     throw new RuntimeException("condition conflict");
                 }
                 result = Result.setMessage("Successfully " + msg + ", update " + times + "rows");
             }catch (IOException e){
+                LogManager.removeWritelock();
                 throw new RuntimeException("fail to " + msg + e.getMessage());
             }
         }else {
+            LogManager.removeWritelock();
             throw new RuntimeException("fail to " + msg + ", assignment type error");
         }
         return result;
