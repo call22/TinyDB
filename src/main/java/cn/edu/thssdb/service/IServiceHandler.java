@@ -8,6 +8,7 @@ import cn.edu.thssdb.parser.SQLParser;
 import cn.edu.thssdb.query.statement.Statement;
 import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.schema.Manager;
+import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Global;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -70,8 +71,8 @@ public class IServiceHandler implements IService.Iface {
   public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
     ExecuteStatementResp resp = new ExecuteStatementResp();
     if(manager.checkSessionId(req.sessionId)) {
-      try {
         ArrayList<String> statementResult = new ArrayList<>();
+        try {
         Listener listener = getListenerFromStatement(req.statement);
         System.out.println("get listener.");
         ArrayList<Statement> statements = listener.getStatements();
@@ -92,7 +93,8 @@ public class IServiceHandler implements IService.Iface {
         resp.setStatus(new Status(Global.FAILURE_CODE));
         resp.setIsAbort(true);  // 失败, 但是用户登录了
         resp.setHasResult(false);
-        resp.setStatementsResult(new ArrayList<>());
+        statementResult.add(e.getMessage());
+        resp.setStatementsResult(statementResult);
       }
     }
     else {

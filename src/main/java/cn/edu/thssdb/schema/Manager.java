@@ -4,6 +4,7 @@ import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.exception.*;
 
 import cn.edu.thssdb.utils.Global;
+import org.apache.thrift.TException;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class Manager {
    * 存储当前连接情况*/
   private static HashMap<String, String> userInfo;
   private static ArrayList<Long> sessionIds;
-  private static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+//  private static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   String currentDB;
 
   private static final String SCHEMA_FILE="schema";
@@ -63,16 +64,25 @@ public class Manager {
         currentDB = DEFAULT_DBNAME;
         updateSchema();
       }
-      // 反序列化
-      FileInputStream fileInputStream = new FileInputStream(Global.infoPath);
-      ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
-      userInfo = (HashMap<String, String>) objectInputStream.readObject();
-      if(userInfo == null){
-        userInfo = new HashMap<String, String>();
-        userInfo.put("user", "password");
+      userInfo = new HashMap<>();
+      try {
+        File file = new File(Global.infoPath); // 要读取以上路径的input。txt文件
+        InputStreamReader reader = new InputStreamReader(
+                new FileInputStream(file)); // 建立一个输入流对象reader
+        BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
+        String line = "";
+        line = br.readLine();
+        while (line != null) {
+          String[] info = line.split(" ");
+          userInfo.put(info[0], info[1]);
+          line = br.readLine(); // 一次读入一行数据
+        }
+        reader.close();
+      }catch (ArrayIndexOutOfBoundsException e){
+        System.out.println("Manager load user information error.");
       }
       sessionIds = new ArrayList<>();
-    }catch (IOException | ClassNotFoundException e){
+    }catch (IOException e){
       System.err.println(e.getMessage());
     }
   }
@@ -192,10 +202,15 @@ public class Manager {
     }
     updateSchema();
     try {
-      FileOutputStream outputStream = new FileOutputStream(Global.infoPath);
-      ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-      objectOutputStream.writeObject(userInfo);
-      objectOutputStream.close();
+      File file = new File(Global.infoPath); // 相对路径
+      BufferedWriter out = new BufferedWriter(new FileWriter(file));
+      StringBuilder infos = new StringBuilder();
+      for (String username : userInfo.keySet()) {
+        infos.append(username).append(" ").append(userInfo.get(username)).append("\r\n");
+      }
+      out.write(infos.toString());
+      out.flush(); // 把缓存区内容压入文件
+      out.close(); // 最后记得关闭文件
     }catch (FileNotFoundException e){
       throw new IOException(e.getMessage());
     }
