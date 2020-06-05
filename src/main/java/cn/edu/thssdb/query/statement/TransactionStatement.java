@@ -30,6 +30,7 @@ public class TransactionStatement extends Statement{
     String msg = "[Start transaction...]";
     LogManager.setIsTransaction(true);
     LogManager.writeLocks = new ArrayList<>();
+    LogManager.logList=new ArrayList<>();
     result = Result.setMessage(msg);
     return result;
   }

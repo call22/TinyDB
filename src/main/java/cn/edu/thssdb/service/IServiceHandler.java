@@ -8,6 +8,7 @@ import cn.edu.thssdb.parser.SQLParser;
 import cn.edu.thssdb.query.statement.Statement;
 import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.schema.Manager;
+import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Global;
 import cn.edu.thssdb.utils.LogManager;
 import org.antlr.v4.runtime.CharStream;
@@ -78,7 +79,6 @@ public class IServiceHandler implements IService.Iface {
         ArrayList<Statement> statements = listener.getStatements();
         for (Statement statement : statements) {
           if (statement.isValid()) {
-//            System.out.println(statement);
             statementResult.add(statement.execute(manager).toString()); // 正常运行
           } else {
             System.out.println("execute error.");

@@ -11,7 +11,6 @@ public class CheckPointStatement extends Statement {
 
     @Override
     public Result execute(Manager manager) throws RuntimeException{
-        // 若无事务启动
         if (LogManager.getIsTransaction()) {
             throw new RuntimeException("Transaction not committed yet");
         }

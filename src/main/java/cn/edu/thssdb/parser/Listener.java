@@ -382,10 +382,21 @@ public class Listener extends SQLBaseListener{
     @Override
     public void enterCommit_stmt(SQLParser.Commit_stmtContext ctx) {
 //        super.enterCommit_stmt(ctx);
+        CommitStatement commitStatement = new CommitStatement();
+        statements.add(commitStatement);
     }
 
     @Override
     public void enterBegin_transaction_stmt(SQLParser.Begin_transaction_stmtContext ctx) {
 //        super.enterBegin_transaction_stmt(ctx);
+        TransactionStatement transactionStatement = new TransactionStatement();
+        statements.add(transactionStatement);
+    }
+
+    @Override
+    public void enterCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) {
+//        super.enterCheckpoint_stmt(ctx);
+        CheckPointStatement checkPointStatement = new CheckPointStatement();
+        statements.add(checkPointStatement);
     }
 }

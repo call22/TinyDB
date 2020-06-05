@@ -65,6 +65,8 @@ public class LogManager {
    * 写一条log
    */
   public static void writeLog(Manager manager) throws IOException {
+    System.out.println("writeLog:::::"+"\n");
+
     String dbname=manager.getCurrentDB().getName();
     String logPath=Global.dirPath +dbname+"/"+dbname+".log";
     if(!new File(Global.dirPath +dbname).exists()){
@@ -75,20 +77,22 @@ public class LogManager {
       new File(logPath);
     }
     FileWriter toLog=new FileWriter(logPath,true);
-    toLog.write("begin transaction"+System.getProperty("line.separator"));
+//    toLog.write("begin transaction"+System.getProperty("line.separator"));
 
     for(String logrecord : logList){
       toLog.write(logrecord+System.getProperty("line.separator"));
     }
-    toLog.write("commit"+System.getProperty("line.separator"));
+//    toLog.write("commit"+System.getProperty("line.separator"));
 
     toLog.flush();
     toLog.close();
 
   }
   public static void writeSingleLog(Manager manager,String log) throws IOException {
+    System.out.println("writeSingleLog:::::"+log+"\n");
 
     String dbname=manager.getCurrentDB().getName();
+    System.out.println("getCurrentDB"+dbname+"\n");
     String logPath=Global.dirPath +dbname+"/"+dbname+".log";
     if(!new File(Global.dirPath +dbname).exists()){
       File f=new File(Global.dirPath +dbname);
@@ -102,6 +106,8 @@ public class LogManager {
     toLog.write(log+System.getProperty("line.separator"));
     toLog.flush();
     toLog.close();
+    System.out.println("aFtEr...writeSingleLog:::::"+log+"\n");
+
   }
 
 
@@ -162,7 +168,7 @@ public class LogManager {
     return statements;
   }
 
-  public static void redo(Manager manager, Database db, String statement) throws IOException {
+  public static void redo(Manager manager, Database db, String statement)  {
     System.out.println(statement);
 
     manager.switchTempDatabase(db.getName());
@@ -172,8 +178,13 @@ public class LogManager {
 
     for (Statement s : statementArrayList){
       assertTrue(s.isValid());    // 必须判断正确
+      try{
+        System.out.println(s.execute(manager).toString());
+      }catch (RuntimeException e){
+        System.out.println(e.getMessage());
+      }
 
-      System.out.println(s.execute(manager).toString());
+
     }
   }
 
@@ -204,7 +215,7 @@ public class LogManager {
    */
   public static void deleteLogs(Database db) throws IOException {
 
-    String logPath=Global.dirPath +db.getName()+"/"+db.getName()+",log";
+    String logPath=Global.dirPath +db.getName()+"/"+db.getName()+".log";
     FileWriter toLog=new FileWriter(logPath);
     toLog.write("");
     toLog.flush();

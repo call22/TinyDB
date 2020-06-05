@@ -5,6 +5,7 @@ import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.query.Result;
 import cn.edu.thssdb.schema.*;
 import cn.edu.thssdb.type.ColumnType;
+import cn.edu.thssdb.utils.LogManager;
 
 import javax.xml.crypto.Data;
 import java.io.IOException;
@@ -44,37 +45,51 @@ public class SchemaStatement extends Statement {
         switch (this.type){
             case create_db: {
                 String msg = "[create database]: " + this.databaseName;
-                try {
-                    manager.createDatabaseIfNotExists(this.databaseName);
-                    result = Result.setMessage("Successfully " + msg);
-                } catch (DuplicateKeyException e) {
-                    result = Result.setMessage("database name: " + this.databaseName + " already exists");
-                } catch (IOException e) {
-                    throw new RuntimeException("Fail to " + msg + e.getMessage());    // 运行出错, 反馈到server
+                if(LogManager.getIsTransaction()){
+                    result=Result.setMessage("Transaction not commited yet!");
+                }else{
+                    try {
+                        manager.createDatabaseIfNotExists(this.databaseName);
+                        result = Result.setMessage("Successfully " + msg);
+                    } catch (DuplicateKeyException e) {
+                        result = Result.setMessage("database name: " + this.databaseName + " already exists");
+                    } catch (IOException e) {
+                        throw new RuntimeException("Fail to " + msg + e.getMessage());    // 运行出错, 反馈到server
+                    }
                 }
+
                 break;
             }
             case drop_db: {
                 String msg = "[drop database]: " + this.databaseName;
-                try {
-                    manager.deleteDatabase(this.databaseName);
-                    result = Result.setMessage("Successfully " + msg);
-                } catch (KeyNotExistException e) {
-                    result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
-                } catch (IOException e) {
-                    throw new RuntimeException("Fail to " + msg + e.getMessage());
+                if(LogManager.getIsTransaction()){
+                    result=Result.setMessage("Transaction not commited yet!");
+                }else{
+                    try {
+                        manager.deleteDatabase(this.databaseName);
+                        result = Result.setMessage("Successfully " + msg);
+                    } catch (KeyNotExistException e) {
+                        result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
+                    } catch (IOException e) {
+                        throw new RuntimeException("Fail to " + msg + e.getMessage());
+                    }
                 }
+
                 break;
             }
             case use_db: {
                 String msg = "[switch database]: " + this.databaseName;
-                try {
-                    manager.switchDatabase(this.databaseName);
-                    result = Result.setMessage("successfully " + msg + ", current database: " + this.databaseName);
-                } catch (KeyNotExistException e) {
-                    result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
-                } catch (IOException e) {
-                    throw new RuntimeException("Fail to " + msg + e.getMessage() + "\n current database: " + manager.getCurrentDB());
+                if(LogManager.getIsTransaction()){
+                    result=Result.setMessage("Transaction not commited yet!");
+                }else{
+                    try {
+                        manager.switchDatabase(this.databaseName);
+                        result = Result.setMessage("successfully " + msg + ", current database: " + this.databaseName);
+                    } catch (KeyNotExistException e) {
+                        result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
+                    } catch (IOException e) {
+                        throw new RuntimeException("Fail to " + msg + e.getMessage() + "\n current database: " + manager.getCurrentDB());
+                    }
                 }
                 break;
             }

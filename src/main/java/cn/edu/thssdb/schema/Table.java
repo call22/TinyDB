@@ -122,9 +122,9 @@ public class Table implements Iterable<Row> {
       FileInputStream fileIn = new FileInputStream(filePath);
       ObjectInputStream ois = new ObjectInputStream(fileIn);
       try{
-        ArrayList<Pair<Entry, Row>> leafArrayList = (ArrayList<Pair<Entry, Row>>) ois.readObject();
-        for (Pair<Entry, Row> leaf : leafArrayList) {
-          Rowindex.put(leaf.getKey(), leaf.getValue());
+        ArrayList< Row> leafArrayList = (ArrayList<Row>) ois.readObject();
+        for (Row leaf : leafArrayList) {
+          Rowindex.put(leaf.getEntries().get(primaryIndex), leaf);
         }
 
       }catch (ClassNotFoundException e){
