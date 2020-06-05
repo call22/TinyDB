@@ -20,7 +20,12 @@ sql_stmt :
     | use_db_stmt
     | update_stmt
     | commit_stmt
-    | begin_transaction_stmt;
+    | begin_transaction_stmt
+    | checkpoint_stmt;
+
+checkpoint_stmt
+: K_CHECKPOINT;
+
 
 begin_transaction_stmt
 : K_BEGIN K_TRANSACTION;
@@ -175,7 +180,7 @@ K_WHERE : W H E R E;
 K_COMMIT : C O M M I T;
 K_TRANSACTION : T R A N S A C T I O N;
 K_BEGIN : B E G I N;
-
+K_CHECKPOINT : C H E C K P O I N T;
 
 IDENTIFIER :
     [a-zA-Z_] [a-zA-Z_0-9]* ;

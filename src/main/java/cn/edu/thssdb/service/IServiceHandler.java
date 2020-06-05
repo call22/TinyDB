@@ -10,6 +10,7 @@ import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Global;
+import cn.edu.thssdb.utils.LogManager;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -71,13 +72,14 @@ public class IServiceHandler implements IService.Iface {
   public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
     ExecuteStatementResp resp = new ExecuteStatementResp();
     if(manager.checkSessionId(req.sessionId)) {
-        ArrayList<String> statementResult = new ArrayList<>();
-        try {
+      ArrayList<String> statementResult = new ArrayList<>();
+      try {
         Listener listener = getListenerFromStatement(req.statement);
         System.out.println("get listener.");
         ArrayList<Statement> statements = listener.getStatements();
         for (Statement statement : statements) {
           if (statement.isValid()) {
+//            System.out.println(statement);
             statementResult.add(statement.execute(manager).toString()); // 正常运行
           } else {
             System.out.println("execute error.");
@@ -114,12 +116,22 @@ public class IServiceHandler implements IService.Iface {
     SQLParser parser = new SQLParser(tokens);
     parser.removeErrorListeners();      // 去除默认的错误监听器
     parser.addErrorListener(new SQLErrorListener());    // 添加定制的错误监听器
-    ParseTree tree;
+    ParseTree tree = null;
     try{
       tree = parser.parse();
+
+      if(LogManager.getIsTransaction()){
+        LogManager.logList.add(statement);
+      }else{
+        LogManager.writeSingleLog(manager,statement);
+      }
+
+
     } catch (RuntimeException e){
       System.out.println(e.getMessage());
       throw new SyntaxErrorException(e.getMessage());
+    }catch (IOException e){
+      System.out.println(e.getMessage());
     }
     Listener listener = new Listener();
     ParseTreeWalker.DEFAULT.walk(listener, tree);

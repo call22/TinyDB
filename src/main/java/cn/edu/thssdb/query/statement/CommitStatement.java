@@ -4,6 +4,7 @@ import cn.edu.thssdb.query.Result;
 import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.utils.LogManager;
 
+import java.io.IOException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CommitStatement extends Statement{
@@ -21,6 +22,13 @@ public class CommitStatement extends Statement{
       writeLock.unlock();
     }
     LogManager.setIsTransaction(false);
+    try{
+      LogManager.writeLog(manager);
+    }catch (IOException e){
+      throw new RuntimeException("Fail to " + msg + e.getMessage());
+
+    }
+
     result = Result.setMessage(msg);
     return result;
   }

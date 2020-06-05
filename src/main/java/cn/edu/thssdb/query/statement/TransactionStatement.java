@@ -18,14 +18,14 @@ public class TransactionStatement extends Statement{
       throw new RuntimeException("Fail to start transaction: last transaction has not committed.");
     }
     // 首先序列化索引树
-    LinkedList<Table> tables = manager.getCurrentDB().getTables();
-    for (Table table : tables) {
-      try {
-        table.serialize();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
+//    LinkedList<Table> tables = manager.getCurrentDB().getTables();
+//    for (Table table : tables) {
+//      try {
+//        table.serialize();
+//      } catch (IOException e) {
+//        e.printStackTrace();
+//      }
+//    }
     Result result;
     String msg = "[Start transaction...]";
     LogManager.setIsTransaction(true);

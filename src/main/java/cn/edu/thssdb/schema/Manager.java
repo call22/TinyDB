@@ -5,6 +5,7 @@ import cn.edu.thssdb.exception.*;
 
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.TException;
+import cn.edu.thssdb.utils.LogManager;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -44,20 +45,24 @@ public class Manager {
         DataOutputStream dos = new DataOutputStream(fos);
         dos.writeInt(0);
       }
-      FileInputStream fis = new FileInputStream(filename);
-      DataInputStream dis = new DataInputStream(fis);
-      int databaseNum = dis.readInt();
-      for (int i = 0; i < databaseNum; i++) {
-        int dbNamelength = dis.readInt();
-        byte[] dbname = new byte[dbNamelength];
-        dis.read(dbname);
+      if(new File(filename).exists()) {
 
-        Database db = new Database(new String(dbname));
-        databases.put(db.getName(), db);
-        if (i == 0) {
-          currentDB = db.getName();
+        FileInputStream fis = new FileInputStream(filename);
+        DataInputStream dis = new DataInputStream(fis);
+        int databaseNum = dis.readInt();
+        for (int i = 0; i < databaseNum; i++) {
+          int dbNamelength = dis.readInt();
+          byte[] dbname = new byte[dbNamelength];
+          dis.read(dbname);
+
+          Database db = new Database(new String(dbname));
+          databases.put(db.getName(), db);
         }
+        dis.close();
+        fis.close();
+
       }
+
       if (databases.isEmpty()) {
         Database defaultdb = new Database(DEFAULT_DBNAME);
         databases.put(DEFAULT_DBNAME, defaultdb);
@@ -78,9 +83,19 @@ public class Manager {
           line = br.readLine(); // 一次读入一行数据
         }
         reader.close();
-      }catch (ArrayIndexOutOfBoundsException e){
+      }catch (ArrayIndexOutOfBoundsException e) {
         System.out.println("Manager load user information error.");
       }
+      for(Database db:databases.values()){
+        String fileDir=Global.dirPath+db.getName();
+
+        String logname = fileDir+"/"+db.getName() + ".log";
+        if(new File(logname).exists()){
+
+          LogManager.recover(this,db);
+        }
+      }
+
       sessionIds = new ArrayList<>();
     }catch (IOException e){
       System.err.println(e.getMessage());
@@ -124,7 +139,7 @@ public class Manager {
     if(!databases.containsKey(dbname)){
       Database newdb=new Database(dbname);
       databases.put(dbname,newdb);
-      //updateSchema();
+      updateSchema();
 
     }else{
       throw new DuplicateKeyException();
@@ -140,8 +155,8 @@ public class Manager {
    */
   public void deleteDatabase(String dbName) throws IOException {
     if(databases.containsKey(dbName)){
-      Database deletedDB=databases.get(dbName);
-      deletedDB.dropSelf();
+//      Database deletedDB=databases.get(dbName);
+//      deletedDB.dropSelf();
 
       databases.remove(dbName);
       if(dbName.equals(currentDB)){
@@ -155,7 +170,7 @@ public class Manager {
 //          updateSchema();
         }
       }
-      //updateSchema();
+      updateSchema();
     }else {
       throw new KeyNotExistException();
     }
@@ -174,7 +189,13 @@ public class Manager {
       throw new KeyNotExistException();
     }
   }
-
+  public void switchTempDatabase(String dbName) throws IOException {
+    if(databases.containsKey(dbName)){
+      currentDB=dbName;
+    }else{
+      throw new KeyNotExistException();
+    }
+  }
   /**
    * 更新schema文件中的数据库信息
    * @throws KeyNotExistException 此名字的数据库不存在
@@ -201,6 +222,7 @@ public class Manager {
       d.quit();
     }
     updateSchema();
+    persist();
     try {
       File file = new File(Global.infoPath); // 相对路径
       BufferedWriter out = new BufferedWriter(new FileWriter(file));
@@ -213,6 +235,53 @@ public class Manager {
       out.close(); // 最后记得关闭文件
     }catch (FileNotFoundException e){
       throw new IOException(e.getMessage());
+    }
+  }
+  /**
+   * 持久化信息
+   * 内存中保有什么信息？
+   * */
+
+  public void persist() throws IOException {
+    // 先删除该删除的文件夹
+    ArrayList<String> dbnames=new ArrayList<>();
+    for(Database db :databases.values()){
+      dbnames.add(db.getName());
+    }
+    String dirPath=Global.dirPath;
+    File file = new File(dirPath);
+    File[] files = file.listFiles();
+    for(File f :files){
+      if(!f.isFile() && !dbnames.contains(f.getName())){
+        deleteDir(f.getPath());
+      }
+    }
+    // 将每个数据库及其包含的表持久化
+    for(Database db :databases.values()){
+      db.persist();
+      LogManager.deleteLogs(db);
+    }
+
+  }
+
+  /**
+   * 迭代删除文件夹
+   * @param dirPath 文件夹路径
+   */
+  public static void deleteDir(String dirPath) {
+    File file = new File(dirPath);
+    if(file.isFile()) {
+      file.delete();
+    }else {
+      File[] files = file.listFiles();
+      if(files == null) {
+        file.delete();
+      }else {
+        for (int i = 0; i < files.length; i++) {
+          deleteDir(files[i].getAbsolutePath());
+        }
+        file.delete();
+      }
     }
   }
 

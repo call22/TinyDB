@@ -392,4 +392,11 @@ public class Listener extends SQLBaseListener{
         TransactionStatement transactionStatement = new TransactionStatement();
         statements.add(transactionStatement);
     }
+
+    @Override
+    public void enterCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) {
+//        super.enterCheckpoint_stmt(ctx);
+        CheckPointStatement checkPointStatement = new CheckPointStatement();
+        statements.add(checkPointStatement);
+    }
 }

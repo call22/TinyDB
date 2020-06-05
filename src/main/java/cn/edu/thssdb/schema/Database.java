@@ -46,8 +46,18 @@ public class Database {
    * @throws IOException 写入文件失败
    */
 
-  private void persist() throws IOException {
+  public void persist() throws IOException {
+    String fileDir=Global.dirPath+name;
+
+    if(!new File(fileDir).exists()){
+      File FileDir=new File(fileDir);
+      FileDir.mkdirs();
+    }
+
     String filename = Global.dirPath+name+"/"+name + SCHEMA_EXTENSION;
+    if(!new File(filename).exists()){
+      new File(filename);
+    }
     FileOutputStream fos = new FileOutputStream(filename);
     DataOutputStream dos = new DataOutputStream(fos);
     dos.writeInt(tables.size());
@@ -57,6 +67,9 @@ public class Database {
     }
     fos.close();
     dos.close();
+    for (Table t :tables.values()){
+      t.serializeIndex();
+    }
   }
 
   /**
@@ -105,7 +118,7 @@ public class Database {
     if(!tables.containsKey(name)){
       Table newTabel= new Table(this.name,name,columns);
       tables.put(newTabel.getTableName(),newTabel);
-      persist();
+//      persist();
 
     }else{
       throw new DuplicateKeyException();
@@ -123,11 +136,11 @@ public class Database {
 
   public void drop(String tableName) throws IOException {
     if(tables.containsKey(tableName)){
-      Table table=tables.get(tableName);
-      table.drop();
+//      Table table=tables.get(tableName);
+//      table.drop();
 
       tables.remove(tableName);
-      persist();
+//      persist();
 
     }else{
       throw new KeyNotExistException();
@@ -142,18 +155,18 @@ public class Database {
    * @return
    * @throws IOException 将新表信息写入文件时出错
    */
-  public void alterTableDrop(String tablename,String column) throws IOException {
-    //存在此table
-    Table t=tables.get(tablename);
-    if(t==null){
-      throw new KeyNotExistException();
-    }
-
-    t.alterDrop(column);
-    //persist();
-
-
-  }
+//  public void alterTableDrop(String tablename,String column) throws IOException {
+//    //存在此table
+//    Table t=tables.get(tablename);
+//    if(t==null){
+//      throw new KeyNotExistException();
+//    }
+//
+//    t.alterDrop(column);
+//    //persist();
+//
+//
+//  }
 
   /**
    * 向tablename添加column
@@ -164,15 +177,15 @@ public class Database {
    * @return
    * @throws IOException 将新表信息写入文件时出错
    */
-  public void alterTableAdd(String tablename,Column column) throws IOException {
-    Table t=tables.get(tablename);
-    //存在此table
-    if(t==null){
-      throw new KeyNotExistException();
-    }
-    t.alterADD(column);
-    persist();
-  }
+//  public void alterTableAdd(String tablename,Column column) throws IOException {
+//    Table t=tables.get(tablename);
+//    //存在此table
+//    if(t==null){
+//      throw new KeyNotExistException();
+//    }
+//    t.alterADD(column);
+//    persist();
+//  }
 
   /**
    * 从数据库中选择表单
@@ -189,10 +202,10 @@ public class Database {
    */
   private void recover() throws IOException {
     String fileDir=Global.dirPath+name;
-    if(!new File(fileDir).exists()){
-      File FileDir=new File(fileDir);
-      FileDir.mkdirs();
-    }
+//    if(!new File(fileDir).exists()){
+//      File FileDir=new File(fileDir);
+//      FileDir.mkdirs();
+//    }
     String filename = fileDir+"/"+name + SCHEMA_EXTENSION;
     if(new File(filename).exists()){
       FileInputStream fis = new FileInputStream(filename);
@@ -205,10 +218,14 @@ public class Database {
         Table t= TableFromSchema(tableSchema);
         tables.put(t.getTableName(),t);
       }
-    }else{
-      File metaFile = new File(filename);
-      persist();
+      dis.close();
+      fis.close();
+
     }
+//    else{
+//      File metaFile = new File(filename);
+//      persist();
+//    }
   }
 
   /**
@@ -269,10 +286,10 @@ public class Database {
    * @throws IOException 将数据库信息写入文件时出错
    */
   public void quit() throws IOException {
-    for(Table t:tables.values()){
-      t.getRAF().close();;
-      t.serialize();
-    }
+//    for(Table t:tables.values()){
+//      t.getRAF().close();;
+//      t.serialize();
+//    }
     persist();
   }
 
@@ -282,17 +299,17 @@ public class Database {
    * @return
    * @throws IOException 删除文件时出错
    */
-  public void dropSelf() throws IOException {
-    for(Table t :tables.values()){
-      t.drop();
-    }
-    String filpath = Global.dirPath+"/"+name;
-    String metaFile=filpath+"/"+name+SCHEMA_EXTENSION;
-    File deletedMeta=new File(metaFile);
-    deletedMeta.delete();
-
-    File deletedFile= new File(filpath);
-    deletedFile.delete();
-  }
+//  public void dropSelf() throws IOException {
+//    for(Table t :tables.values()){
+//      t.drop();
+//    }
+//    String filpath = Global.dirPath+"/"+name;
+//    String metaFile=filpath+"/"+name+SCHEMA_EXTENSION;
+//    File deletedMeta=new File(metaFile);
+//    deletedMeta.delete();
+//
+//    File deletedFile= new File(filpath);
+//    deletedFile.delete();
+//  }
 
 }
