@@ -7,6 +7,7 @@ import cn.edu.thssdb.utils.Global;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -70,7 +71,42 @@ public class Database {
     for (Table t :tables.values()){
       t.serializeIndex();
     }
+    // 先删除该删除的文件夹
+    ArrayList<String> tablenames=new ArrayList<>();
+    for(Table table:tables.values()){
+      tablenames.add(table.getTableName());
+    }
+    String dirPath=Global.dirPath+name;
+    File file = new File(dirPath);
+    File[] files = file.listFiles();
+    for(File f :files){
+      if(!f.isFile() && !tablenames.contains(f.getName())){
+        deleteDir(f.getPath());
+      }
+    }
+
   }
+  /**
+   * 迭代删除文件夹
+   * @param dirPath 文件夹路径
+   */
+  public static void deleteDir(String dirPath) {
+    File file = new File(dirPath);
+    if(file.isFile()) {
+      file.delete();
+    }else {
+      File[] files = file.listFiles();
+      if(files == null) {
+        file.delete();
+      }else {
+        for (int i = 0; i < files.length; i++) {
+          deleteDir(files[i].getAbsolutePath());
+        }
+        file.delete();
+      }
+    }
+  }
+
 
   /**
    * 将某个表的信息（表名|列信息）转化成可写入.meta文件的二进制格式
