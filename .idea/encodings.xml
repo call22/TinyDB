@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding" defaultCharsetForPropertiesFiles="UTF-8" addBOMForNewFiles="with BOM under Windows, with no BOM otherwise">
-    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLBaseListener.java" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLBaseVisitor.java" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLLexer.java" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLListener.java" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLVisitor.java" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLBaseListener.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLBaseVisitor.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLLexer.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLListener.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQLVisitor.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/schema/DBSManager.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/cn/edu/thssdb/server/ThssDB.java" charset="UTF-8" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
 </project>

@@ -42,7 +42,7 @@ public class Client {
   private static CommandLine commandLine;
 
   public static void main(String[] args) {
-    Long sessionId = -1L;
+    int sessionId = -1;
 
     commandLine = parseCmd(args);
     if (commandLine.hasOption(HELP_ARGS)) {
@@ -118,17 +118,20 @@ public class Client {
   }
 
   /**connect*/
-  private static Long connect(String username, String password) {
+  private static int connect(String username, String password) {
     ConnectReq req = new ConnectReq();
-    Long sessionId = -1L;
+    int sessionId = -1;
     req.setUsername(username);
     req.setPassword(password);
     try{
       ConnectResp resp = client.connect(req);
       sessionId = resp.sessionId;
-      if(resp.status.getCode() == Global.FAILURE_CODE){  // 连接出错
+      if(resp.status.getCode() == Global.PASSWORD_ERROR_CODE){  // 连接出错
         println("Fail to connect server, please check your username and password\n");
-      }else{  // 连接正常
+      }else if(resp.status.getCode() == Global.ALREADY_LOGIN_CODE){
+        println("you already connect to system, please disconnect first.");
+      }
+      else{  // 连接正常
         println("Success to connect server\n");
       }
     } catch (TException e) {
@@ -138,15 +141,18 @@ public class Client {
   }
 
   /**disconnect*/
-  private static void disconnect(Long sessionId) {
+  private static void disconnect(int sessionId) {
     DisconnetReq req = new DisconnetReq();
     req.setSessionId(sessionId);
     try{
       DisconnetResp resp;
       resp = client.disconnect(req);
-      if(resp.status.getCode() == Global.FAILURE_CODE){
-        println("Fail to disconnect, please connect first.");
-      }else{
+      if(resp.status.getCode() == Global.PASSWORD_ERROR_CODE){
+        println("Error sessionId, fail to disconnect, please connect first.");
+      } else if(resp.status.getCode() == Global.RUN_ERROR_CODE){
+        println("system run error, please try again.");
+      }
+      else{
         println("Success to disconnect.");
       }
     } catch (TException e) {
@@ -155,25 +161,29 @@ public class Client {
   }
 
   /**statement运行*/
-  private static void executeStatement(String msg, Long sessionId) {
+  private static void executeStatement(String msg, int sessionId) {
     ExecuteStatementReq req = new ExecuteStatementReq();
     req.setSessionId(sessionId);
     req.setStatement(msg);
     try{
       ExecuteStatementResp resp;
       resp = client.executeStatement(req);
-      if(resp.status.getCode() == Global.FAILURE_CODE){
-        if(resp.isAbort){ // statement解析出错, 但是用户已经登录
-          println("Exception occur during execution.");
-          for(String result : resp.statementsResult){
-            println(result);
-          }
-        }else{  // 用户未登录
-          println("you are not logged in.");
-        }
-      }else{
-        // 运行全部正确
+      if(resp.status.getCode() == Global.PARSE_ERROR_CODE){
+        println("fail to parse statement, please check your statement.");
         for(String result : resp.statementsResult){
+          println(result);
+        }
+      } else if(resp.status.getCode() == Global.RUN_ERROR_CODE) {
+        println("fail to run statement, please check your statement. ");
+        for(String result : resp.statementsResult) {
+          println(result);
+        }
+      } else if(resp.status.getCode() == Global.NEED_LOGIN_CODE) {
+        println("please connect to system before you execute statement.");
+      }
+      else {
+        // 运行全部正确
+        for (String result : resp.statementsResult) {
           println(result);
         }
       }
@@ -185,25 +195,25 @@ public class Client {
   static Options createOptions() {
     Options options = new Options();
     options.addOption(Option.builder(HELP_ARGS)
-        .argName(HELP_NAME)
-        .desc("Display help information(optional)")
-        .hasArg(false)
-        .required(false)
-        .build()
+            .argName(HELP_NAME)
+            .desc("Display help information(optional)")
+            .hasArg(false)
+            .required(false)
+            .build()
     );
     options.addOption(Option.builder(HOST_ARGS)
-        .argName(HOST_NAME)
-        .desc("Host (optional, default 127.0.0.1)")
-        .hasArg(false)
-        .required(false)
-        .build()
+            .argName(HOST_NAME)
+            .desc("Host (optional, default 127.0.0.1)")
+            .hasArg(false)
+            .required(false)
+            .build()
     );
     options.addOption(Option.builder(PORT_ARGS)
-        .argName(PORT_NAME)
-        .desc("Port (optional, default 6667)")
-        .hasArg(false)
-        .required(false)
-        .build()
+            .argName(PORT_NAME)
+            .desc("Port (optional, default 6667)")
+            .hasArg(false)
+            .required(false)
+            .build()
     );
     return options;
   }

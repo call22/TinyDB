@@ -15,11 +15,11 @@ struct ConnectReq{
 
 struct ConnectResp{
   1: required Status status
-  2: required i64 sessionId
+  2: required i32 sessionId
 }
 
 struct DisconnetReq{
-  1: required i64 sessionId
+  1: required i32 sessionId
 }
 
 struct DisconnetResp{
@@ -32,15 +32,14 @@ struct GetTimeResp {
 }
 
 struct ExecuteStatementReq {
-  1: required i64 sessionId
+  1: required i32 sessionId
   2: required string statement
 }
 
 struct ExecuteStatementResp{
   1: required Status status
-  2: required bool isAbort
-  3: required bool hasResult
-  4: optional list<string> statementsResult
+  2: required bool hasResult
+  3: optional list<string> statementsResult
 }
 
 service IService {

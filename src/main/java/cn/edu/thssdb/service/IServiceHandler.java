@@ -7,6 +7,7 @@ import cn.edu.thssdb.parser.SQLLexer;
 import cn.edu.thssdb.parser.SQLParser;
 import cn.edu.thssdb.query.statement.Statement;
 import cn.edu.thssdb.rpc.thrift.*;
+import cn.edu.thssdb.schema.DBSManager;
 import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Global;
@@ -25,9 +26,10 @@ import java.util.Dictionary;
 import java.util.List;
 
 public class IServiceHandler implements IService.Iface {
-  private Manager manager;
-  public IServiceHandler(Manager manager){
-    this.manager = manager;
+  private DBSManager dbsManager;
+
+  public IServiceHandler(){
+    this.dbsManager = DBSManager.getInstance();
   }
 
   @Override
@@ -40,17 +42,16 @@ public class IServiceHandler implements IService.Iface {
 
   @Override
   public ConnectResp connect(ConnectReq req) throws TException {
-    // 检验用户名和密码
     ConnectResp resp = new ConnectResp();
-    if(!manager.checkInfo(req.username, req.password)){
-      resp.setStatus(new Status(Global.FAILURE_CODE));
+    // 检验用户名和密码
+    dbsManager = DBSManager.getInstance();
+    int id = dbsManager.login(req.username, req.password);
+    if (id == -1) {  // 不合法
+      resp.setStatus(new Status(Global.PASSWORD_ERROR_CODE));
       resp.setSessionId(-1);
-    }
-    else{
+    } else {
       resp.setStatus(new Status(Global.SUCCESS_CODE));
-      Manager.id = Manager.id + 1;
-      resp.setSessionId(Manager.id);
-      manager.setSessionIds(Manager.id);
+      resp.setSessionId(id);
     }
     return resp;
   }
@@ -58,12 +59,18 @@ public class IServiceHandler implements IService.Iface {
   @Override
   public DisconnetResp disconnect(DisconnetReq req) throws TException {
     DisconnetResp resp = new DisconnetResp();
-    if(!manager.checkSessionId(req.sessionId)){
-      resp.setStatus(new Status(Global.FAILURE_CODE));
+    if(!dbsManager.checkSessionId(req.sessionId)){
+      resp.setStatus(new Status(Global.PASSWORD_ERROR_CODE));
     }
     else {
-      resp.setStatus(new Status(Global.SUCCESS_CODE));
-      manager.dropSessionIds(req.sessionId);
+      try {
+        dbsManager.logOut(req.sessionId);
+        resp.setStatus(new Status(Global.SUCCESS_CODE));
+      }catch (IOException e) {
+        // manager断开处理失败
+        //TODO 此时数据是否需要恢复
+        resp.setStatus(new Status(Global.RUN_ERROR_CODE));
+      }
     }
     return resp;
   }
@@ -71,37 +78,37 @@ public class IServiceHandler implements IService.Iface {
   @Override
   public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
     ExecuteStatementResp resp = new ExecuteStatementResp();
-    if(manager.checkSessionId(req.sessionId)) {
+    if(dbsManager.checkSessionId(req.sessionId)) {
       ArrayList<String> statementResult = new ArrayList<>();
       try {
         Listener listener = getListenerFromStatement(req.statement);
         System.out.println("get listener.");
         ArrayList<Statement> statements = listener.getStatements();
+        resp.setStatus(new Status(Global.SUCCESS_CODE));
         for (Statement statement : statements) {
           if (statement.isValid()) {
-            statementResult.add(statement.execute(manager).toString()); // 正常运行
+//            System.out.println(statement);
+            statementResult.add(statement.execute(dbsManager.getManager()).toString()); // 正常运行
           } else {
             System.out.println("execute error.");
             statementResult.add(statement.getMessage());  // 出错
-            resp.setIsAbort(true);
+            resp.setStatus(new Status(Global.RUN_ERROR_CODE));
+            break;
           }
         }
-        resp.setStatus(new Status(Global.SUCCESS_CODE));
         resp.setHasResult(true);
         resp.setStatementsResult(statementResult);
       } catch (RuntimeException e) {
         System.out.println("parser error.");
-        resp.setStatus(new Status(Global.FAILURE_CODE));
-        resp.setIsAbort(true);  // 失败, 但是用户登录了
+        resp.setStatus(new Status(Global.PARSE_ERROR_CODE));
         resp.setHasResult(false);
-        statementResult.add(e.getMessage());
+        statementResult.add("parser error: "+e.getMessage());
         resp.setStatementsResult(statementResult);
       }
     }
     else {
       System.out.println("need login.");
-      resp.setStatus(new Status(Global.FAILURE_CODE));
-      resp.setIsAbort(false); // 失败, 没有登录
+      resp.setStatus(new Status(Global.NEED_LOGIN_CODE));
       resp.setHasResult(false);
       resp.setStatementsResult(new ArrayList<>());
     }
@@ -122,7 +129,7 @@ public class IServiceHandler implements IService.Iface {
       if(LogManager.getIsTransaction()){
         LogManager.logList.add(statement);
       }else{
-        LogManager.writeSingleLog(manager,statement);
+        LogManager.writeSingleLog(dbsManager.getManager(),statement);
       }
 
 

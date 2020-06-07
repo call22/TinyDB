@@ -15,11 +15,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Manager {
   private HashMap<String, Database> databases;
-  public static Long id = 0L;
-  /**存储用户信息的hash
-   * 存储当前连接情况*/
-  private static HashMap<String, String> userInfo;
-  private static ArrayList<Long> sessionIds;
 //  private static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   String currentDB;
 
@@ -72,23 +67,6 @@ public class Manager {
         currentDB = DEFAULT_DBNAME;
         updateSchema();
       }
-      userInfo = new HashMap<>();
-      try {
-        File file = new File(Global.infoPath); // 要读取以上路径的input。txt文件
-        InputStreamReader reader = new InputStreamReader(
-                new FileInputStream(file)); // 建立一个输入流对象reader
-        BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
-        String line = "";
-        line = br.readLine();
-        while (line != null) {
-          String[] info = line.split(" ");
-          userInfo.put(info[0], info[1]);
-          line = br.readLine(); // 一次读入一行数据
-        }
-        reader.close();
-      }catch (ArrayIndexOutOfBoundsException e) {
-        System.out.println("Manager load user information error.");
-      }
       for(Database db:databases.values()){
         String fileDir=Global.dirPath+db.getName();
 
@@ -99,7 +77,6 @@ public class Manager {
         }
       }
       persist();
-      sessionIds = new ArrayList<>();
     }catch (IOException e){
       System.err.println(e.getMessage());
     }
@@ -226,19 +203,6 @@ public class Manager {
     }
     updateSchema();
     persist();
-    try {
-      File file = new File(Global.infoPath); // 相对路径
-      BufferedWriter out = new BufferedWriter(new FileWriter(file));
-      StringBuilder infos = new StringBuilder();
-      for (String username : userInfo.keySet()) {
-        infos.append(username).append(" ").append(userInfo.get(username)).append("\r\n");
-      }
-      out.write(infos.toString());
-      out.flush(); // 把缓存区内容压入文件
-      out.close(); // 最后记得关闭文件
-    }catch (FileNotFoundException e){
-      throw new IOException(e.getMessage());
-    }
   }
   /**
    * 持久化信息
@@ -301,23 +265,5 @@ public class Manager {
     private ManagerHolder() {
 
     }
-  }
-
-  /**
-   * 检查username, password是否正确*/
-  public boolean checkInfo(String username, String password){
-    return userInfo.containsKey(username) && userInfo.get(username).equals(password);
-  }
-
-  public boolean checkSessionId(long id){
-    return sessionIds.contains(id);
-  }
-
-  public void setSessionIds(long id) {
-    sessionIds.add(id);
-  }
-
-  public void dropSessionIds(long id){
-    sessionIds.remove(id);
   }
 }
