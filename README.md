@@ -5,16 +5,16 @@ a tiny and naive database based on ThssDB.
 
 ```
 |- TinyDB
-	|- pom.xml
-	|- README.md								程序运行环境及方式
-	|- sqlResources							测试所用的SQL文件
-	|- src
-		|- main										程序源代码
-		|- test										测试文件
-	|- target
-	|- userinfo
-		|- userinfo.info					记录用户信息（username password）								
-	|- Thssdb.iml
+  |- pom.xml
+  |- README.md                程序运行环境及方式
+  |- sqlResources             测试所用的SQL文件
+  |- src
+    |- main                   程序源代码
+    |- test                   测试文件
+  |- target
+  |- userinfo
+    |- userinfo.info          记录用户信息（username password）								
+  |- Thssdb.iml
 ```
 
 
