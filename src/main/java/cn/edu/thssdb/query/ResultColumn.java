@@ -22,6 +22,12 @@ public class ResultColumn {
         this.columnName = columnName.toUpperCase();
     }
 
+  /**
+   * setter */
+  public void setTableName(String tableName) {
+      this.tableName = tableName;
+    }
+
     /**
      * 获取result column的类型*/
     public RESULT_COLUMN_TYPE getResultType(){

@@ -126,12 +126,27 @@ public class SelectJoinTableStatement extends Statement {
         setMetaInfo(tableName, manager, onCondition);
         setMetaInfo(tableName, manager, whereCondition);
 
-        /** next */
-        // 连接Columns
-
         ArrayList<Column> columns1 = table1.getColumns();
         ArrayList<Column> columns2 = table2.getColumns();
         ArrayList<Column> tmpColumns = new ArrayList<>();
+        /** 若select语句column不是 tablename.column格式,修正*/
+        for (ResultColumn rc : resultColumns) {
+          if (rc.getTableName().equals("")) {
+            for (Column col : columns1) {
+              if(col.getName().equals(rc.getColumnName())) {
+                rc.setTableName(table1.getTableName());
+                break;
+              }
+            }
+            for (Column col : columns2) {
+              if(col.getName().equals(rc.getColumnName())) {
+                rc.setTableName(table2.getTableName());
+                break;
+              }
+            }
+          }
+        }
+        // 连接Columns
         for (Column column : columns1) {
             // 名字改为： tablename + "." + columnname
             tmpColumns.add(new Column(table1.getTableName() + "." + column.getName(),
