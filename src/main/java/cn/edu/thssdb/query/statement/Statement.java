@@ -16,7 +16,9 @@ public abstract class Statement {
     public abstract Result execute(Manager manager) throws RuntimeException;
 
     /**
-     * statement分析过后设置pass标签
+     * statement分析过后设置pass标签, IO错误直接throw RuntimeException, 其他错误设置valid为false
+     *
+     * 从安全、报错信息准确的角度看, 不需要用多个exception.
      * */
     public void setValid(boolean valid){
         this.valid = valid;

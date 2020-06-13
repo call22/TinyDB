@@ -21,10 +21,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.thrift.TException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Dictionary;
-import java.util.List;
+import java.util.*;
 
 public class IServiceHandler implements IService.Iface {
   private DBSManager dbsManager;
@@ -77,7 +74,9 @@ public class IServiceHandler implements IService.Iface {
   }
 
 
-  /**修改: 受到thrift限制, 一次只能返回一个statement的结果*/
+  /**修改: 受到thrift限制, 一次只能返回一个statement的结果
+   * 正常结果在columnlist和rowlist中
+   * 报错信息在columnlist中传给client*/
   @Override
   public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
     ExecuteStatementResp resp = new ExecuteStatementResp();
@@ -88,25 +87,25 @@ public class IServiceHandler implements IService.Iface {
         ArrayList<Statement> statements = listener.getStatements();
         resp.setStatus(new Status(Global.SUCCESS_CODE));
         for (Statement statement : statements) {
+          Result result = statement.execute(dbsManager.getManager());
           if (statement.isValid()) {
-            Result result = statement.execute(dbsManager.getManager());
             resp.setColumnsList(result.getStringColumns());
             resp.setRowList(result.getStringRows());
           } else {
             System.out.println("execute error.");
             resp.setStatus(new Status(Global.RUN_ERROR_CODE));
+            resp.setColumnsList(result.getStringRows().get(0));
             break;
           }
         }
-        resp.setHasResult(true);
       } catch (SyntaxErrorException e) {
         System.out.println(e.getMessage());
         resp.setStatus(new Status(Global.PARSE_ERROR_CODE));
-        resp.setHasResult(false);
+        resp.setColumnsList(new ArrayList<>(Collections.singletonList(e.getMessage())));
       } catch (RuntimeException e) {
         System.out.println(e.getMessage());
         resp.setStatus(new Status(Global.RUN_ERROR_CODE));
-        resp.setHasResult(false);
+        resp.setColumnsList(new ArrayList<>(Collections.singletonList(e.getMessage())));
       }
     }
     else {

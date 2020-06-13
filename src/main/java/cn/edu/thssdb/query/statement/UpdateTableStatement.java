@@ -138,7 +138,8 @@ public class UpdateTableStatement extends Statement {
             }
         }else {
             LogManager.removeWritelock();
-            throw new RuntimeException("fail to " + msg + ", assignment type error");
+            result = Result.setMessage("fail to " + msg + ", assignment type error");
+            this.setValid(false);
         }
         return result;
     }

@@ -71,10 +71,12 @@ public class InsertTableStatement extends Statement {
             result = Result.setMessage("Successfully " + msg);
         } catch (NumberFormatException e) {
             LogManager.removeWritelock();
-            throw new RuntimeException("Fail to " + msg + "entry type format error");
+            result = Result.setMessage("Fail to " + msg + " entry type format error");
+            this.setValid(false);
+//            throw new RuntimeException("Fail to " + msg + "entry type format error");
         } catch (IOException e) {
           LogManager.removeWritelock();
-          throw new RuntimeException("Fail to " + msg + e.getMessage());
+          throw new RuntimeException("Fail to " + msg + " " + e.getMessage());
         }
       return result;
     }

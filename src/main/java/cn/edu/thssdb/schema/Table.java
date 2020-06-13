@@ -168,7 +168,7 @@ public class Table implements Iterable<Row> {
 
     // 判断主键是否重复
     if (Rowindex.contains(row.getEntries().get(primaryIndex))) {
-      throw new IOException("Key already exists");
+      throw new IOException("Primary Key already exists");
     }
     Rowindex.put(entries.get(primaryIndex), row);
 

@@ -36,7 +36,8 @@ public class CreateTableStatement extends Statement {
         } catch (IOException e) {
             throw new RuntimeException("Fail to " + msg + e.getMessage());
         } catch (DuplicateKeyException e){
-            result = Result.setMessage("table name: " + this.tableName + "already exists");
+            result = Result.setMessage("table name: " + this.tableName + " already exists");
+            this.setValid(false);
         }
         return result;
     }

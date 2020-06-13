@@ -39,6 +39,7 @@ public class SchemaStatement extends Statement {
         }
     }
 
+    /**对于IO错误继续报错, 对于用户输入错误存入result, valid置为false*/
     @Override
     public Result execute(Manager manager) throws RuntimeException{
         Result result = null;
@@ -53,8 +54,9 @@ public class SchemaStatement extends Statement {
                         result = Result.setMessage("Successfully " + msg);
                     } catch (DuplicateKeyException e) {
                         result = Result.setMessage("database name: " + this.databaseName + " already exists");
+                        this.setValid(false);
                     } catch (IOException e) {
-                        throw new RuntimeException("Fail to " + msg + e.getMessage());    // 运行出错, 反馈到server
+                        throw new RuntimeException("Fail to " + msg + " " + e.getMessage());    // 运行出错, 反馈到server
                     }
                 }
 
@@ -70,8 +72,9 @@ public class SchemaStatement extends Statement {
                         result = Result.setMessage("Successfully " + msg);
                     } catch (KeyNotExistException e) {
                         result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
+                        this.setValid(false);
                     } catch (IOException e) {
-                        throw new RuntimeException("Fail to " + msg + e.getMessage());
+                        throw new RuntimeException("Fail to " + msg + " " + e.getMessage());
                     }
                 }
 
@@ -87,8 +90,9 @@ public class SchemaStatement extends Statement {
                         result = Result.setMessage("successfully " + msg + ", current database: " + this.databaseName);
                     } catch (KeyNotExistException e) {
                         result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
+                        this.setValid(false);
                     } catch (IOException e) {
-                        throw new RuntimeException("Fail to " + msg + e.getMessage() + "\n current database: " + manager.getCurrentDB());
+                        throw new RuntimeException("Fail to " + msg + " " + e.getMessage() + "\n current database: " + manager.getCurrentDB());
                     }
                 }
                 break;
@@ -100,8 +104,9 @@ public class SchemaStatement extends Statement {
                     result = Result.setMessage("successfully " + msg);
                 } catch (KeyNotExistException e) {
                     result = Result.setMessage("database name: " + this.databaseName + "doesn't exists");
+                    this.setValid(false);
                 } catch (IOException e) {
-                    throw new RuntimeException("Fail to " + msg + e.getMessage());
+                    throw new RuntimeException("Fail to " + msg + " " + e.getMessage());
                 }
                 break;
             }
