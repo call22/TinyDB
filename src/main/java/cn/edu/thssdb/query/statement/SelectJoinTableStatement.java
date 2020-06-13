@@ -3,6 +3,7 @@ package cn.edu.thssdb.query.statement;
 import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.schema.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -162,6 +163,8 @@ public class SelectJoinTableStatement extends Statement {
 
         String msg = "[select table]: " + table1.getTableName() + ", " + table2.getTableName();
         result = new Result();
+        // 先看看是不是where 1 条件，做优化
+        optimizeTableByWhereCondition();
         if (checkLegal(tmpColumns)) {
             try {
                 if(onCondition.check()) {
@@ -203,6 +206,40 @@ public class SelectJoinTableStatement extends Statement {
         }
         result.setColumns(columnList);
         return result;
+    }
+
+    /**
+     * 若where条件为1，筛选满足条件得row，返回新的table
+     * 否则返回原始table
+     */
+    private void optimizeTableByWhereCondition() {
+        if (whereCondition.check() && whereCondition.getTypes() == 1) {
+            try {
+                MetaInfo metaInfo = whereCondition.getMetaInfos().get(0);
+                Table table;
+                boolean isFirstTable;
+                if (metaInfo.getTableName().equals(table1.getTableName())) {
+                    table = table1;
+                    isFirstTable = true;
+                } else {
+                    table = table2;
+                    isFirstTable = false;
+                }
+                Table newTable = new Table(table.getDatabaseName(), table.getTableName(), table.getColumns().toArray(new Column[0]));
+                for (Row row : table) {
+                    if (whereCondition.calculate(row)) {
+                        newTable.insert(row);
+                    }
+                }
+                if (isFirstTable) {
+                    table1 = newTable;
+                } else {
+                    table2 = newTable;
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("check where condition error!");
+            }
+        }
     }
 
     /**
