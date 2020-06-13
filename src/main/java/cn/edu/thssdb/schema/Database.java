@@ -226,8 +226,12 @@ public class Database {
   /**
    * 从数据库中选择表单
    * @param name 表单名称*/
-  public Table selectTable(String name) {
+  public Table selectTable(String name) throws KeyNotExistException{
     // TODO
+    Table table = tables.get(name);
+    if(table == null){
+      throw new KeyNotExistException();
+    }
     return tables.get(name);
   }
 

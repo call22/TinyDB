@@ -1,5 +1,6 @@
 package cn.edu.thssdb.query.statement;
 
+import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.query.ComparerData;
 import cn.edu.thssdb.query.MetaInfo;
 import cn.edu.thssdb.query.MultipleCondition;

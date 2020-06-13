@@ -13,17 +13,36 @@ import java.util.List;
  * 以类似table的形式存储操作之后的返回结果
  * */
 public class Result {
-    private List<Row> rows; // 按列存储结果
+    private ArrayList<Row> rows; // 按列存储结果
     private ArrayList<Column> columns; // 存储对应的column
 
     public Result(){
         this.rows = new ArrayList<>();
+        this.columns = new ArrayList<>();
     }
 
-    public List<Row> getRows() {
-        return rows;
+    /**修改: 为了统一thrift接口,
+     * 将result读取形式有string, 改为column string list 和 row string list
+     * @return*/
+    public List<List<String>> getStringRows() {
+        List<List<String>> stringRows = new ArrayList<>();
+        for(Row row : rows){
+            ArrayList<String> stringRow = new ArrayList<>();
+            for(Entry entry : row.getEntries()){
+                stringRow.add(entry.toString());
+            }
+            stringRows.add(stringRow);
+        }
+        return stringRows;
     }
 
+    public ArrayList<String> getStringColumns() {
+        ArrayList<String> stringColumn = new ArrayList<>();
+        for(Column column : columns) {
+            stringColumn.add(column.getName());
+        }
+        return stringColumn;
+    }
     public void setColumns(Column[] columns) {
         this.columns = new ArrayList<Column> (Arrays.asList(columns));
     }

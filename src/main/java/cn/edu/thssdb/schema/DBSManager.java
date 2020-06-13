@@ -14,7 +14,7 @@ public class DBSManager {
     /**存储用户信息的hash
      * 存储当前连接情况*/
     private static HashMap<String, String> userInfo;
-    private ArrayList<Integer> sessionId = new ArrayList<>();
+    private ArrayList<Long> sessionId = new ArrayList<>();
     private Manager manager;
     /**加载用户信息*/
     private static void loadUserInfo(){
@@ -61,12 +61,12 @@ public class DBSManager {
 
     /**
      * 检查username, password是否正确*/
-    public int login(String username, String password){
+    public Long login(String username, String password){
         if (userInfo.containsKey(username) && userInfo.get(username).equals(password)) {
             // 随机生成id
-            int id = 1000 + ((int) (new Random().nextFloat() * (1000)));
+            long id = 1000 + ((long) (new Random().nextFloat() * (1000)));
             while(sessionId.contains(id)) {
-                id = 1000 + ((int) (new Random().nextFloat() * (1000)));
+                id = 1000 + ((long) (new Random().nextFloat() * (1000)));
             }
             sessionId.add(id);
             if(manager == null){    // 在连接的时候创建
@@ -74,19 +74,19 @@ public class DBSManager {
             }
             return id;
         }else {
-            return -1;
+            return -1L;
         }
     }
 
     /**
      * 检查是否为自身的sessionId*/
-    public boolean checkSessionId(int id){
+    public boolean checkSessionId(long id){
         return sessionId.contains(id);
     }
 
-    public boolean logOut(int id) throws IOException{
+    public boolean logOut(long id) throws IOException{
         if (checkSessionId(id)) {
-            sessionId.remove(new Integer(id));
+            sessionId.remove(new Long(id));
             if(sessionId.isEmpty()) // 为空, 则将manager释放
             {
                 manager.quit();

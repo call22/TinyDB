@@ -15,14 +15,14 @@ struct ConnectReq{
 
 struct ConnectResp{
   1: required Status status
-  2: required i32 sessionId
+  2: required i64 sessionId
 }
 
-struct DisconnetReq{
-  1: required i32 sessionId
+struct DisconnectReq{
+  1: required i64 sessionId
 }
 
-struct DisconnetResp{
+struct DisconnectResp{
   1: required Status status
 }
 
@@ -32,19 +32,22 @@ struct GetTimeResp {
 }
 
 struct ExecuteStatementReq {
-  1: required i32 sessionId
+  1: required i64 sessionId
   2: required string statement
 }
 
 struct ExecuteStatementResp{
   1: required Status status
-  2: required bool hasResult
-  3: optional list<string> statementsResult
+  2: required bool isAbort
+  3: required bool hasResult
+  // only for query
+  4: optional list<string> columnsList
+  5: optional list<list<string>> rowList
 }
 
 service IService {
   GetTimeResp getTime(1: GetTimeReq req);
   ConnectResp connect(1: ConnectReq req);
-  DisconnetResp disconnect(1: DisconnetReq req);
+  DisconnectResp disconnect(1: DisconnectReq req);
   ExecuteStatementResp executeStatement(1: ExecuteStatementReq req);
 }

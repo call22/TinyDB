@@ -5,6 +5,7 @@ import cn.edu.thssdb.parser.Listener;
 import cn.edu.thssdb.parser.SQLErrorListener;
 import cn.edu.thssdb.parser.SQLLexer;
 import cn.edu.thssdb.parser.SQLParser;
+import cn.edu.thssdb.query.Result;
 import cn.edu.thssdb.query.statement.Statement;
 import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.schema.DBSManager;
@@ -45,7 +46,7 @@ public class IServiceHandler implements IService.Iface {
     ConnectResp resp = new ConnectResp();
     // 检验用户名和密码
     dbsManager = DBSManager.getInstance();
-    int id = dbsManager.login(req.username, req.password);
+    long id = dbsManager.login(req.username, req.password);
     if (id == -1) {  // 不合法
       resp.setStatus(new Status(Global.PASSWORD_ERROR_CODE));
       resp.setSessionId(-1);
@@ -57,8 +58,8 @@ public class IServiceHandler implements IService.Iface {
   }
 
   @Override
-  public DisconnetResp disconnect(DisconnetReq req) throws TException {
-    DisconnetResp resp = new DisconnetResp();
+  public DisconnectResp disconnect(DisconnectReq req) throws TException {
+    DisconnectResp resp = new DisconnectResp();
     if(!dbsManager.checkSessionId(req.sessionId)){
       resp.setStatus(new Status(Global.PASSWORD_ERROR_CODE));
     }
@@ -75,11 +76,12 @@ public class IServiceHandler implements IService.Iface {
     return resp;
   }
 
+
+  /**修改: 受到thrift限制, 一次只能返回一个statement的结果*/
   @Override
   public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
     ExecuteStatementResp resp = new ExecuteStatementResp();
     if(dbsManager.checkSessionId(req.sessionId)) {
-      ArrayList<String> statementResult = new ArrayList<>();
       try {
         Listener listener = getListenerFromStatement(req.statement);
         System.out.println("get listener.");
@@ -87,30 +89,30 @@ public class IServiceHandler implements IService.Iface {
         resp.setStatus(new Status(Global.SUCCESS_CODE));
         for (Statement statement : statements) {
           if (statement.isValid()) {
-//            System.out.println(statement);
-            statementResult.add(statement.execute(dbsManager.getManager()).toString()); // 正常运行
+            Result result = statement.execute(dbsManager.getManager());
+            resp.setColumnsList(result.getStringColumns());
+            resp.setRowList(result.getStringRows());
           } else {
             System.out.println("execute error.");
-            statementResult.add(statement.getMessage());  // 出错
             resp.setStatus(new Status(Global.RUN_ERROR_CODE));
             break;
           }
         }
         resp.setHasResult(true);
-        resp.setStatementsResult(statementResult);
-      } catch (RuntimeException e) {
-        System.out.println("parser error.");
+      } catch (SyntaxErrorException e) {
+        System.out.println(e.getMessage());
         resp.setStatus(new Status(Global.PARSE_ERROR_CODE));
         resp.setHasResult(false);
-        statementResult.add("parser error: "+e.getMessage());
-        resp.setStatementsResult(statementResult);
+      } catch (RuntimeException e) {
+        System.out.println(e.getMessage());
+        resp.setStatus(new Status(Global.RUN_ERROR_CODE));
+        resp.setHasResult(false);
       }
     }
     else {
       System.out.println("need login.");
       resp.setStatus(new Status(Global.NEED_LOGIN_CODE));
       resp.setHasResult(false);
-      resp.setStatementsResult(new ArrayList<>());
     }
     return resp;
   }
