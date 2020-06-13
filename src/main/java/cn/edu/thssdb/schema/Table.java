@@ -148,7 +148,7 @@ public class Table implements Iterable<Row> {
     int i = 0;
     for (Column column : columns) {
       if (column.getNull() && entries.get(i) == null) { // 不能是null约束
-        throw new IOException("can not satify NULL constraint");
+        throw new IOException(column.getName() + " can not satify NULL constraint");
       }
       i++;
     }
@@ -570,6 +570,9 @@ public class Table implements Iterable<Row> {
 //    //serialize();
 //    dataFile=new RandomAccessFile(tablePath+File.separator+oldfilename,"rw");
 //  }
+  public void clearRowIndex() {
+    this.Rowindex = new BPlusTree<>();
+  }
 
   public String getDatabaseName() {
       return this.databaseName;

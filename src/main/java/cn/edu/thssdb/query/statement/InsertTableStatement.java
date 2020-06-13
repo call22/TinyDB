@@ -1,5 +1,6 @@
 package cn.edu.thssdb.query.statement;
 
+import cn.edu.thssdb.exception.SyntaxErrorException;
 import cn.edu.thssdb.query.Result;
 import cn.edu.thssdb.schema.*;
 import cn.edu.thssdb.utils.LogManager;
@@ -30,23 +31,31 @@ public class InsertTableStatement extends Statement {
         try {
             Table table = db.selectTable(tableName);
             LogManager.addWritelock(table.lock.writeLock());
-            ArrayList<Column> columns = table.getColumns();
+            ArrayList<String> columns = new ArrayList<>();
+            for(Column column : table.getColumns()) {
+                columns.add(column.getName());
+            }
             // 考虑columnName为空时, 将columns名称补全到columnName
             if (this.columnsName.isEmpty()){
-                for(Column column : columns){
-                    this.columnsName.add(column.getName());
-                }
+                this.columnsName.addAll(columns);
             }
 
             int len = columns.size();
             Entry[] entries = new Entry[len];
-            for(Column column : columns) {
-                int index = columnsName.indexOf(column.getName());
-                if (index == -1)    // 不存在就跳过,为null
-                    continue;
-                String rawValue = rowValue.get(index);
-                // 对于string类型, 要去掉''
-                switch (column.getType()) {
+            //初始化为null
+            for(int idx = 0;idx<len;idx++) {
+                entries[idx] = null;
+            }
+
+            int count = -1;  // 记录对应column，以获取相应value
+            for(String column : columnsName) {
+                count ++;
+                int index = columns.indexOf(column);
+                if (index == -1) {  // columns中存在非法column
+                    throw new SyntaxErrorException(column + " doesn't exist in table's columns");
+                }
+                String rawValue = rowValue.get(count);
+                switch (table.getColumns().get(index).getType()) {
                     case INT:
                         entries[index] = new Entry(Integer.parseInt(rawValue));
                         break;
@@ -67,7 +76,7 @@ public class InsertTableStatement extends Statement {
                         break;
                 }
             }
-            table.insert(new Row(entries));
+            table.insert(new Row(entries)); // 判断插入的值是否符合要求
             result = Result.setMessage("Successfully " + msg);
         } catch (NumberFormatException e) {
             LogManager.removeWritelock();
@@ -77,6 +86,9 @@ public class InsertTableStatement extends Statement {
         } catch (IOException e) {
           LogManager.removeWritelock();
           throw new RuntimeException("Fail to " + msg + " " + e.getMessage());
+        } catch (SyntaxErrorException e) {
+            result = Result.setMessage(e.getMessage());
+            this.setValid(false);
         }
       return result;
     }

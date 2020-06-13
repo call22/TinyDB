@@ -4,6 +4,7 @@ import cn.edu.thssdb.exception.DuplicateKeyException;
 import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.Global;
+import cn.edu.thssdb.utils.LogManager;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -84,7 +85,7 @@ public class Database {
         deleteDir(f.getPath());
       }
     }
-
+    LogManager.deleteLogs(this);
   }
   /**
    * 迭代删除文件夹
@@ -230,7 +231,7 @@ public class Database {
     // TODO
     Table table = tables.get(name);
     if(table == null){
-      throw new KeyNotExistException();
+      throw new KeyNotExistException(name + " doesn't exist");
     }
     return tables.get(name);
   }

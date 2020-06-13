@@ -226,6 +226,7 @@ public class SelectJoinTableStatement extends Statement {
                     isFirstTable = false;
                 }
                 Table newTable = new Table(table.getDatabaseName(), table.getTableName(), table.getColumns().toArray(new Column[0]));
+                newTable.clearRowIndex();
                 for (Row row : table) {
                     if (whereCondition.calculate(row)) {
                         newTable.insert(row);
