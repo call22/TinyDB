@@ -1,4 +1,4 @@
-// Generated from /Users/anyanzhe/workspace/ThssDB/src/main/java/cn/edu/thssdb/parser/SQL.g4 by ANTLR 4.8
+// Generated from C:/Users/龙龙/Documents/大三下学期/数据库原理/作业/TinyDB/src/main/java/cn/edu/thssdb/parser\SQL.g4 by ANTLR 4.8
 package cn.edu.thssdb.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -29,6 +29,24 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSql_stmt(SQLParser.Sql_stmtContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link SQLParser#checkpoint_stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link SQLParser#begin_transaction_stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBegin_transaction_stmt(SQLParser.Begin_transaction_stmtContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link SQLParser#commit_stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCommit_stmt(SQLParser.Commit_stmtContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link SQLParser#create_db_stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -41,18 +59,6 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDrop_db_stmt(SQLParser.Drop_db_stmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SQLParser#create_user_stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCreate_user_stmt(SQLParser.Create_user_stmtContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link SQLParser#drop_user_stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDrop_user_stmt(SQLParser.Drop_user_stmtContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link SQLParser#create_table_stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -64,18 +70,6 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitShow_meta_stmt(SQLParser.Show_meta_stmtContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link SQLParser#grant_stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitGrant_stmt(SQLParser.Grant_stmtContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link SQLParser#revoke_stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitRevoke_stmt(SQLParser.Revoke_stmtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SQLParser#use_db_stmt}.
 	 * @param ctx the parse tree
@@ -101,12 +95,6 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitShow_db_stmt(SQLParser.Show_db_stmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SQLParser#quit_stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitQuit_stmt(SQLParser.Quit_stmtContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link SQLParser#show_table_stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -119,29 +107,11 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitInsert_stmt(SQLParser.Insert_stmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SQLParser#value_entry}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitValue_entry(SQLParser.Value_entryContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link SQLParser#select_stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitSelect_stmt(SQLParser.Select_stmtContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link SQLParser#create_view_stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCreate_view_stmt(SQLParser.Create_view_stmtContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link SQLParser#drop_view_stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDrop_view_stmt(SQLParser.Drop_view_stmtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SQLParser#update_stmt}.
 	 * @param ctx the parse tree
@@ -173,12 +143,6 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMultiple_condition(SQLParser.Multiple_conditionContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SQLParser#condition}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCondition(SQLParser.ConditionContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link SQLParser#comparer}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -190,12 +154,6 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitComparator(SQLParser.ComparatorContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link SQLParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitExpression(SQLParser.ExpressionContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SQLParser#table_constraint}.
 	 * @param ctx the parse tree
@@ -214,12 +172,6 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitTable_query(SQLParser.Table_queryContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link SQLParser#auth_level}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAuth_level(SQLParser.Auth_levelContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SQLParser#literal_value}.
 	 * @param ctx the parse tree
@@ -245,27 +197,9 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTable_name(SQLParser.Table_nameContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SQLParser#user_name}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitUser_name(SQLParser.User_nameContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link SQLParser#column_name}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitColumn_name(SQLParser.Column_nameContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link SQLParser#view_name}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitView_name(SQLParser.View_nameContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link SQLParser#password}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPassword(SQLParser.PasswordContext ctx);
 }

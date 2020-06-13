@@ -6,8 +6,8 @@
         <PerGrammarGenerationSettings>
           <option name="fileName" value="$PROJECT_DIR$/src/main/java/cn/edu/thssdb/parser/SQL.g4" />
           <option name="autoGen" value="true" />
-          <option name="outputDir" value="$PROJECT_DIR$/src/main/java/" />
-          <option name="libDir" value="" />
+          <option name="outputDir" value="C:\Users\龙龙\Documents\大三下学期\数据库原理\作业\TinyDB\src\main\java" />
+          <option name="libDir" value="C:\Users\龙龙\Documents\大三下学期\数据库原理\作业\TinyDB\src\main\java" />
           <option name="encoding" value="" />
           <option name="pkg" value="" />
           <option name="language" value="" />
@@ -16,10 +16,6 @@
       </list>
     </option>
   </component>
-  <component name="ExternalStorageConfigurationManager" enabled="true" />
-  <component name="JavaScriptSettings">
-    <option name="languageLevel" value="ES6" />
-  </component>
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>
@@ -27,7 +23,5 @@
       </list>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" project-jdk-name="1.8" project-jdk-type="JavaSDK">
-    <output url="file://$PROJECT_DIR$/out" />
-  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="false" project-jdk-name="1.8.0_212" project-jdk-type="JavaSDK" />
 </project>

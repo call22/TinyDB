@@ -5,12 +5,12 @@ import cn.edu.thssdb.type.ColumnType;
 public class Column implements Comparable<Column> {
   private String name;
   private ColumnType type;
-  private int primary;
+  private boolean primary;
   private boolean notNull;
   private int maxLength;
 
-  public Column(String name, ColumnType type, int primary, boolean notNull, int maxLength) {
-    this.name = name;
+  public Column(String name, ColumnType type, boolean primary, boolean notNull, int maxLength) {
+    this.name = name.toUpperCase();
     this.type = type;
     this.primary = primary;
     this.notNull = notNull;
@@ -23,8 +23,9 @@ public class Column implements Comparable<Column> {
   }
 
   public String toString() {
-    return name + ',' + type + ',' + primary + ',' + notNull + ',' + maxLength;
+    return name + " | " + type + " | " + primary + " | " + notNull + " | " + maxLength;
   }
+
   public String getName() {
     return this.name;
   }
@@ -35,12 +36,8 @@ public class Column implements Comparable<Column> {
     return this.maxLength;
   }
 
+  public boolean getNull(){return notNull;}
   public boolean isPrimary() {
-    if(primary == 1) {
-      return true;
-    }
-    else {
-      return false;
-    }
+    return primary;
   }
 }
