@@ -38,7 +38,7 @@ public class SQLBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements SQ
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx) { return visitChildren(ctx); }
+	@Override public T visitCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

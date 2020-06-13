@@ -52,13 +52,13 @@ public class SQLBaseListener implements SQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx) { }
+	@Override public void enterCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx) { }
+	@Override public void exitCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

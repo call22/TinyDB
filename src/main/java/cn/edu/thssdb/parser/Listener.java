@@ -395,9 +395,10 @@ public class Listener extends SQLBaseListener {
     }
 
     @Override
-    public void enterSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx) {
-//        super.enterSavepoint_stmt(ctx);
-        SavePointStatement savePointStatement = new SavePointStatement();
+    public void enterCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) {
+//        super.enterCheckpoint_stmt(ctx);
+        CheckPointStatement savePointStatement = new CheckPointStatement();
         statements.add(savePointStatement);
     }
+
 }

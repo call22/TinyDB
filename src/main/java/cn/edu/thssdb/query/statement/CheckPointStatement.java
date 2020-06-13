@@ -7,7 +7,7 @@ import cn.edu.thssdb.utils.LogManager;
 
 import java.io.IOException;
 
-public class SavePointStatement extends Statement {
+public class CheckPointStatement extends Statement {
 
     @Override
     public Result execute(Manager manager) throws RuntimeException{

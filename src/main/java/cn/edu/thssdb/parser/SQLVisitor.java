@@ -29,11 +29,11 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSql_stmt(SQLParser.Sql_stmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SQLParser#savepoint_stmt}.
+	 * Visit a parse tree produced by {@link SQLParser#checkpoint_stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx);
+	T visitCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SQLParser#begin_transaction_stmt}.
 	 * @param ctx the parse tree

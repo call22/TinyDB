@@ -25,10 +25,10 @@ public class SQLParser extends Parser {
 		K_KEY=37, K_NOT=38, K_NULL=39, K_ON=40, K_PRIMARY=41, K_QUIT=42, K_REVOKE=43, 
 		K_SELECT=44, K_SET=45, K_SHOW=46, K_TABLE=47, K_TO=48, K_UPDATE=49, K_USE=50, 
 		K_USER=51, K_VALUES=52, K_VIEW=53, K_WHERE=54, K_COMMIT=55, K_TRANSACTION=56, 
-		K_BEGIN=57, K_SAVEPOINT=58, IDENTIFIER=59, NUMERIC_LITERAL=60, EXPONENT=61, 
+		K_BEGIN=57, K_CHECKPOINTS=58, IDENTIFIER=59, NUMERIC_LITERAL=60, EXPONENT=61, 
 		STRING_LITERAL=62;
 	public static final int
-		RULE_parse = 0, RULE_sql_stmt_list = 1, RULE_sql_stmt = 2, RULE_savepoint_stmt = 3, 
+		RULE_parse = 0, RULE_sql_stmt_list = 1, RULE_sql_stmt = 2, RULE_checkpoint_stmt = 3, 
 		RULE_begin_transaction_stmt = 4, RULE_commit_stmt = 5, RULE_create_db_stmt = 6, 
 		RULE_drop_db_stmt = 7, RULE_create_table_stmt = 8, RULE_show_meta_stmt = 9, 
 		RULE_use_db_stmt = 10, RULE_delete_stmt = 11, RULE_drop_table_stmt = 12, 
@@ -40,7 +40,7 @@ public class SQLParser extends Parser {
 		RULE_database_name = 29, RULE_table_name = 30, RULE_column_name = 31;
 	private static String[] makeRuleNames() {
 		return new String[] {
-			"parse", "sql_stmt_list", "sql_stmt", "savepoint_stmt", "begin_transaction_stmt", 
+			"parse", "sql_stmt_list", "sql_stmt", "checkpoint_stmt", "begin_transaction_stmt", 
 			"commit_stmt", "create_db_stmt", "drop_db_stmt", "create_table_stmt", 
 			"show_meta_stmt", "use_db_stmt", "delete_stmt", "drop_table_stmt", "show_db_stmt", 
 			"show_table_stmt", "insert_stmt", "select_stmt", "update_stmt", "column_def", 
@@ -67,7 +67,7 @@ public class SQLParser extends Parser {
 			"K_IF", "K_IDENTIFIED", "K_INSERT", "K_INTO", "K_JOIN", "K_KEY", "K_NOT", 
 			"K_NULL", "K_ON", "K_PRIMARY", "K_QUIT", "K_REVOKE", "K_SELECT", "K_SET", 
 			"K_SHOW", "K_TABLE", "K_TO", "K_UPDATE", "K_USE", "K_USER", "K_VALUES", 
-			"K_VIEW", "K_WHERE", "K_COMMIT", "K_TRANSACTION", "K_BEGIN", "K_SAVEPOINT", 
+			"K_VIEW", "K_WHERE", "K_COMMIT", "K_TRANSACTION", "K_BEGIN", "K_CHECKPOINTS", 
 			"IDENTIFIER", "NUMERIC_LITERAL", "EXPONENT", "STRING_LITERAL"
 		};
 	}
@@ -159,7 +159,7 @@ public class SQLParser extends Parser {
 			setState(67);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << K_CREATE) | (1L << K_DELETE) | (1L << K_DROP) | (1L << K_INSERT) | (1L << K_SELECT) | (1L << K_SHOW) | (1L << K_UPDATE) | (1L << K_USE) | (1L << K_COMMIT) | (1L << K_BEGIN) | (1L << K_SAVEPOINT))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << K_CREATE) | (1L << K_DELETE) | (1L << K_DROP) | (1L << K_INSERT) | (1L << K_SELECT) | (1L << K_SHOW) | (1L << K_UPDATE) | (1L << K_USE) | (1L << K_COMMIT) | (1L << K_BEGIN) | (1L << K_CHECKPOINTS))) != 0)) {
 				{
 				{
 				setState(64);
@@ -345,8 +345,8 @@ public class SQLParser extends Parser {
 		public Begin_transaction_stmtContext begin_transaction_stmt() {
 			return getRuleContext(Begin_transaction_stmtContext.class,0);
 		}
-		public Savepoint_stmtContext savepoint_stmt() {
-			return getRuleContext(Savepoint_stmtContext.class,0);
+		public Checkpoint_stmtContext checkpoint_stmt() {
+			return getRuleContext(Checkpoint_stmtContext.class,0);
 		}
 		public Sql_stmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -476,7 +476,7 @@ public class SQLParser extends Parser {
 				enterOuterAlt(_localctx, 15);
 				{
 				setState(111);
-				savepoint_stmt();
+				checkpoint_stmt();
 				}
 				break;
 			}
@@ -492,35 +492,35 @@ public class SQLParser extends Parser {
 		return _localctx;
 	}
 
-	public static class Savepoint_stmtContext extends ParserRuleContext {
-		public TerminalNode K_SAVEPOINT() { return getToken(SQLParser.K_SAVEPOINT, 0); }
-		public Savepoint_stmtContext(ParserRuleContext parent, int invokingState) {
+	public static class Checkpoint_stmtContext extends ParserRuleContext {
+		public TerminalNode K_CHECKPOINTS() { return getToken(SQLParser.K_CHECKPOINTS, 0); }
+		public Checkpoint_stmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
-		@Override public int getRuleIndex() { return RULE_savepoint_stmt; }
+		@Override public int getRuleIndex() { return RULE_checkpoint_stmt; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof SQLListener ) ((SQLListener)listener).enterSavepoint_stmt(this);
+			if ( listener instanceof SQLListener ) ((SQLListener)listener).enterCheckpoint_stmt(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof SQLListener ) ((SQLListener)listener).exitSavepoint_stmt(this);
+			if ( listener instanceof SQLListener ) ((SQLListener)listener).exitCheckpoint_stmt(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof SQLVisitor ) return ((SQLVisitor<? extends T>)visitor).visitSavepoint_stmt(this);
+			if ( visitor instanceof SQLVisitor ) return ((SQLVisitor<? extends T>)visitor).visitCheckpoint_stmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
 
-	public final Savepoint_stmtContext savepoint_stmt() throws RecognitionException {
-		Savepoint_stmtContext _localctx = new Savepoint_stmtContext(_ctx, getState());
-		enterRule(_localctx, 6, RULE_savepoint_stmt);
+	public final Checkpoint_stmtContext checkpoint_stmt() throws RecognitionException {
+		Checkpoint_stmtContext _localctx = new Checkpoint_stmtContext(_ctx, getState());
+		enterRule(_localctx, 6, RULE_checkpoint_stmt);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(114);
-			match(K_SAVEPOINT);
+			match(K_CHECKPOINTS);
 			}
 		}
 		catch (RecognitionException re) {

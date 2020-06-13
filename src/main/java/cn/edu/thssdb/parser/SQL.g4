@@ -21,10 +21,10 @@ sql_stmt :
     | update_stmt
     | commit_stmt
     | begin_transaction_stmt
-    | savepoint_stmt;
+    | checkpoint_stmt;
 
-savepoint_stmt
-: K_SAVEPOINT;
+checkpoint_stmt
+: K_CHECKPOINTS;
 
 
 begin_transaction_stmt
@@ -180,7 +180,7 @@ K_WHERE : W H E R E;
 K_COMMIT : C O M M I T;
 K_TRANSACTION : T R A N S A C T I O N;
 K_BEGIN : B E G I N;
-K_SAVEPOINT : S A V E P O I N T;
+K_CHECKPOINTS : C H E C K P O I N T S;
 
 IDENTIFIER :
     [a-zA-Z_] [a-zA-Z_0-9]* ;
