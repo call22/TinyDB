@@ -1,3 +1,4 @@
+// Generated from C:/Users/龙龙/Documents/大三下学期/数据库原理/作业/TinyDB/src/main/java/cn/edu/thssdb/parser\SQL.g4 by ANTLR 4.8
 package cn.edu.thssdb.parser;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -37,7 +38,7 @@ public class SQLBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements SQ
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) { return visitChildren(ctx); }
+	@Override public T visitSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

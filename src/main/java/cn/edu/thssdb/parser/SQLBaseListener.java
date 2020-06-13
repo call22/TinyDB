@@ -1,3 +1,4 @@
+// Generated from C:/Users/龙龙/Documents/大三下学期/数据库原理/作业/TinyDB/src/main/java/cn/edu/thssdb/parser\SQL.g4 by ANTLR 4.8
 package cn.edu.thssdb.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -51,13 +52,13 @@ public class SQLBaseListener implements SQLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) { }
+	@Override public void enterSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) { }
+	@Override public void exitSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

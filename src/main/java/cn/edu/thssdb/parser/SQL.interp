@@ -122,7 +122,7 @@ K_WHERE
 K_COMMIT
 K_TRANSACTION
 K_BEGIN
-K_CHECKPOINT
+K_SAVEPOINT
 IDENTIFIER
 NUMERIC_LITERAL
 EXPONENT
@@ -132,7 +132,7 @@ rule names:
 parse
 sql_stmt_list
 sql_stmt
-checkpoint_stmt
+savepoint_stmt
 begin_transaction_stmt
 commit_stmt
 create_db_stmt

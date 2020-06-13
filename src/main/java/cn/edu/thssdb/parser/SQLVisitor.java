@@ -1,3 +1,4 @@
+// Generated from C:/Users/龙龙/Documents/大三下学期/数据库原理/作业/TinyDB/src/main/java/cn/edu/thssdb/parser\SQL.g4 by ANTLR 4.8
 package cn.edu.thssdb.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -28,11 +29,11 @@ public interface SQLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSql_stmt(SQLParser.Sql_stmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SQLParser#checkpoint_stmt}.
+	 * Visit a parse tree produced by {@link SQLParser#savepoint_stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx);
+	T visitSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SQLParser#begin_transaction_stmt}.
 	 * @param ctx the parse tree

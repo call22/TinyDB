@@ -183,7 +183,7 @@ public class Client {
     // 对statement进行拆分.
     String[] statement = msg.split("(?<=;)");
     for(String state : statement) {
-      println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+      println(" ");
       try {
         req.setStatement(state);
         ExecuteStatementResp resp;
@@ -191,7 +191,7 @@ public class Client {
         if (resp.status.getCode() == Global.PARSE_ERROR_CODE) {
           println(resp.getColumnsList().get(0));
         } else if (resp.status.getCode() == Global.RUN_ERROR_CODE) {
-          println("exception occurs when execute statement.");
+//          println("exception occurs when execute statement.");
           println(resp.getColumnsList().get(0));
         } else if (resp.status.getCode() == Global.NEED_LOGIN_CODE) {
           println("please connect to system before you execute statement.");
@@ -200,7 +200,7 @@ public class Client {
           print("| ");
           print(String.join(" | ", resp.getColumnsList()));
           println(" |");
-          println("==========================================================");
+          println("==========================================");
           for (List<String> row : resp.getRowList()) {
             print("| ");
             print(String.join(" | ", row));
@@ -363,7 +363,7 @@ public class Client {
       ExecuteStatementResp resp = client.executeStatement(req);
       if (resp.getStatus().code != Global.SUCCESS_CODE) {
         success = false;
-        println(resp.getColumnsList().get(0));
+//        println(resp.getColumnsList().get(0));
       }
     }
     if (success) {

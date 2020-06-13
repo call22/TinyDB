@@ -12,17 +12,20 @@ import cn.edu.thssdb.type.ColumnType;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-public class Listener extends SQLBaseListener{
-    private ArrayList<MultipleCondition> whereConditions = new ArrayList<>();	// 存储where条件
-    private ArrayList<MultipleCondition> onConditions = new ArrayList<>();		// 存储on条件
-    private ArrayList<Statement> statements = new ArrayList<>();				// 全部statement
+public class Listener extends SQLBaseListener {
+    private ArrayList<MultipleCondition> whereConditions = new ArrayList<>();  // 存储where条件
+    private ArrayList<MultipleCondition> onConditions = new ArrayList<>();    // 存储on条件
+    private ArrayList<Statement> statements = new ArrayList<>();        // 全部statement
     private ArrayList<Column> create_columns = new ArrayList<>();               // create时存储column
     private ArrayList<String> duplicate_columns_check = new ArrayList<>();      // 帮助检查是否重名
     private ArrayList<SyntaxErrorException> syntaxErrorExceptions = new ArrayList<>();  // 记录一次statement解析过程中的语法错误
     private MultipleCondition default_condition = new MultipleCondition(MultipleCondition.OP_TYPE.eq,
             new ComparerData(new Entry(1)), new ComparerData(new Entry(1)));
-    /**获取解析之后的statement*/
-    public ArrayList<Statement> getStatements(){
+
+    /**
+     * 获取解析之后的statement
+     */
+    public ArrayList<Statement> getStatements() {
         return statements;
     }
 
@@ -34,7 +37,7 @@ public class Listener extends SQLBaseListener{
 
     @Override
     public void enterCreate_db_stmt(SQLParser.Create_db_stmtContext ctx) {
-        Statement create_db = new SchemaStatement(SchemaStatement.OP_TYPE.create_db, ctx.database_name().getText().toUpperCase(),"");
+        Statement create_db = new SchemaStatement(SchemaStatement.OP_TYPE.create_db, ctx.database_name().getText().toUpperCase(), "");
         statements.add(create_db);
     }
 
@@ -78,7 +81,7 @@ public class Listener extends SQLBaseListener{
         boolean notNull = false;
         boolean primary = false;
         String input_type = ctx.type_name().getChild(0).getText().toUpperCase();
-        switch (input_type){
+        switch (input_type) {
             case "INT":
                 type = ColumnType.INT;
                 break;
@@ -93,27 +96,26 @@ public class Listener extends SQLBaseListener{
                 break;
             case "STRING":
                 type = ColumnType.STRING;
-                try{
+                try {
                     max_length = Integer.parseInt(ctx.type_name().NUMERIC_LITERAL().toString());
-                }catch (NumberFormatException e){
+                } catch (NumberFormatException e) {
                     syntaxErrorExceptions.add(new SyntaxErrorException(e.getMessage()));
                 }
                 break;
             default:
                 syntaxErrorExceptions.add(new SyntaxErrorException("column type error"));
         }
-        for(SQLParser.Column_constraintContext constraint : ctx.column_constraint()){
-            if(constraint.getChild(0).equals(constraint.K_PRIMARY())){
+        for (SQLParser.Column_constraintContext constraint : ctx.column_constraint()) {
+            if (constraint.getChild(0).equals(constraint.K_PRIMARY())) {
                 primary = true;
-            }
-            else{
+            } else {
                 notNull = true;
             }
         }
         // 判断column的名称duplicate
-        if(duplicate_columns_check.contains(column_name)){
+        if (duplicate_columns_check.contains(column_name)) {
             syntaxErrorExceptions.add(new SyntaxErrorException("duplicate columns"));
-        }else {
+        } else {
             duplicate_columns_check.add(column_name);
             Column column = new Column(column_name, type, primary, notNull, max_length);
             create_columns.add(column);
@@ -122,12 +124,12 @@ public class Listener extends SQLBaseListener{
 
     @Override
     public void enterTable_constraint(SQLParser.Table_constraintContext ctx) {
-        for(SQLParser.Column_nameContext name : ctx.column_name()){
+        for (SQLParser.Column_nameContext name : ctx.column_name()) {
             int idx = duplicate_columns_check.indexOf(name.getText().toUpperCase());
-            if(idx == -1){
+            if (idx == -1) {
                 // not exists
                 syntaxErrorExceptions.add(new SyntaxErrorException("column name in constraints does not exist"));
-            }else{
+            } else {
                 Column column = create_columns.get(idx);
                 // 替换为新的column
                 create_columns.set(idx, new Column(column.getName(), column.getType(), true, column.getNull(), column.getMaxLength()));
@@ -138,14 +140,14 @@ public class Listener extends SQLBaseListener{
     @Override
     public void exitCreate_table_stmt(SQLParser.Create_table_stmtContext ctx) {
         Statement create_table;
-        if(syntaxErrorExceptions.isEmpty()){
+        if (syntaxErrorExceptions.isEmpty()) {
             String table_name = ctx.table_name().getText().toUpperCase();
             create_table = new CreateTableStatement(table_name, create_columns);
-        }else{  // 有语法错误
+        } else {  // 有语法错误
             create_table = new CreateTableStatement();
             create_table.setValid(false);
             StringBuilder msg = new StringBuilder();
-            for (SyntaxErrorException e : syntaxErrorExceptions){
+            for (SyntaxErrorException e : syntaxErrorExceptions) {
                 msg.append("; ").append(e.getMessage());
             }
             create_table.setMessage(msg.toString());
@@ -164,17 +166,17 @@ public class Listener extends SQLBaseListener{
         String table_name = ctx.table_name().getText().toUpperCase();
         ArrayList<String> columns_name = new ArrayList<>();
         ArrayList<String> values = new ArrayList<>();
-        for(SQLParser.Column_nameContext name : ctx.column_name()){
+        for (SQLParser.Column_nameContext name : ctx.column_name()) {
             columns_name.add(name.getText().toUpperCase());
         }
-        for(SQLParser.Literal_valueContext value : ctx.literal_value()){
+        for (SQLParser.Literal_valueContext value : ctx.literal_value()) {
             values.add(value.getText());
         }
-        if(columns_name.size() != 0 && columns_name.size() != values.size()){   // 存在columns, 但与values不等
+        if (columns_name.size() != 0 && columns_name.size() != values.size()) {   // 存在columns, 但与values不等
             insert_table = new InsertTableStatement();
             insert_table.setValid(false);
             insert_table.setMessage("columns doesn't equal to values");
-        }else{
+        } else {
             insert_table = new InsertTableStatement(table_name, columns_name, values);
         }
         statements.add(insert_table);
@@ -182,7 +184,7 @@ public class Listener extends SQLBaseListener{
 
     // get multiple_condition
 
-    private ComparerData getFromLiteral_value(String value){
+    private ComparerData getFromLiteral_value(String value) {
         ComparerData comparer = new ComparerData();
         ArrayList<String> regexs = new ArrayList<>();
         regexs.add("[nN][uU][lL][lL]"); // null
@@ -192,26 +194,26 @@ public class Listener extends SQLBaseListener{
         regexs.add(".\\d+([eE][-+]?\\d+)?");    // double
         // TODO 这里可能有问题
         try {
-            if (Pattern.matches(regexs.get(0),value)) {
+            if (Pattern.matches(regexs.get(0), value)) {
                 comparer = new ComparerData();
-            } else if (Pattern.matches(regexs.get(1),value)) {
+            } else if (Pattern.matches(regexs.get(1), value)) {
                 comparer = new ComparerData(new Entry(value.substring(1, value.length() - 1)));
-            } else if (Pattern.matches(regexs.get(2),value)) {
+            } else if (Pattern.matches(regexs.get(2), value)) {
                 comparer = new ComparerData(new Entry(Integer.parseInt(value)));
-            } else if (Pattern.matches(regexs.get(3),value)) {
+            } else if (Pattern.matches(regexs.get(3), value)) {
                 comparer = new ComparerData(new Entry(Double.parseDouble(value)));
-            } else if (Pattern.matches(regexs.get(4),value)) {
+            } else if (Pattern.matches(regexs.get(4), value)) {
                 comparer = new ComparerData(new Entry(Double.parseDouble(value)));
             } else {
                 syntaxErrorExceptions.add(new SyntaxErrorException("unexpected value type"));
             }
-        }catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             syntaxErrorExceptions.add(new SyntaxErrorException("number format exception: " + e.getMessage()));
         }
         return comparer;
     }
 
-    private MultipleCondition.OP_TYPE getFromComparator(String comp){
+    private MultipleCondition.OP_TYPE getFromComparator(String comp) {
         comp = comp.toUpperCase();
         MultipleCondition.OP_TYPE comparator = MultipleCondition.OP_TYPE.eq;
         switch (comp) {
@@ -242,16 +244,16 @@ public class Listener extends SQLBaseListener{
     @Override
     public void enterMultiple_condition(SQLParser.Multiple_conditionContext ctx) {
         ArrayList<ComparerData> comparerList = new ArrayList<>();
-        for(SQLParser.ComparerContext comp : ctx.comparer()){
+        for (SQLParser.ComparerContext comp : ctx.comparer()) {
             ComparerData comparer;
-            if(comp.column_full_name() != null){
+            if (comp.column_full_name() != null) {
                 String table_name = null;
-                if(comp.column_full_name().table_name() != null){
+                if (comp.column_full_name().table_name() != null) {
                     table_name = comp.column_full_name().table_name().getText().toUpperCase();
                 }
                 comparer = new ComparerData(table_name,
                         comp.column_full_name().column_name().getText().toUpperCase());
-            }else{
+            } else {
                 String value = comp.literal_value().getChild(0).getText();
                 comparer = getFromLiteral_value(value);
             }
@@ -269,16 +271,16 @@ public class Listener extends SQLBaseListener{
     @Override
     public void exitDelete_stmt(SQLParser.Delete_stmtContext ctx) {
         Statement delete_row;
-        if(syntaxErrorExceptions.isEmpty()){
+        if (syntaxErrorExceptions.isEmpty()) {
             String table_name = ctx.table_name().getText().toUpperCase();
             if (whereConditions.isEmpty())  // 没有where选择
                 whereConditions.add(default_condition);
             delete_row = new DeleteTableStatement(table_name, whereConditions.get(0));
-        }else{  // 有语法错误
+        } else {  // 有语法错误
             delete_row = new DeleteTableStatement();
             delete_row.setValid(false);
             StringBuilder msg = new StringBuilder();
-            for (SyntaxErrorException e : syntaxErrorExceptions){
+            for (SyntaxErrorException e : syntaxErrorExceptions) {
                 msg.append("; ").append(e.getMessage());
             }
             delete_row.setMessage(msg.toString());
@@ -292,7 +294,7 @@ public class Listener extends SQLBaseListener{
     @Override
     public void exitUpdate_stmt(SQLParser.Update_stmtContext ctx) {
         Statement update_row;
-        if(syntaxErrorExceptions.isEmpty()) {
+        if (syntaxErrorExceptions.isEmpty()) {
             String tableName = ctx.table_name().getText().toUpperCase();
             String columnName = ctx.column_name().getText().toUpperCase();
             String value = ctx.literal_value().getText();
@@ -300,11 +302,11 @@ public class Listener extends SQLBaseListener{
             if (whereConditions.isEmpty())  // where为空时
                 whereConditions.add(default_condition);
             update_row = new UpdateTableStatement(tableName, columnName, comparerData, whereConditions.get(0));
-        }else{
+        } else {
             update_row = new UpdateTableStatement();
             update_row.setValid(false);
             StringBuilder msg = new StringBuilder();
-            for (SyntaxErrorException e : syntaxErrorExceptions){
+            for (SyntaxErrorException e : syntaxErrorExceptions) {
                 msg.append("; ").append(e.getMessage());
             }
             update_row.setMessage(msg.toString());
@@ -318,7 +320,7 @@ public class Listener extends SQLBaseListener{
 
     @Override
     public void exitTable_query(SQLParser.Table_queryContext ctx) {
-        if(ctx.getChildCount() > 1){
+        if (ctx.getChildCount() > 1) {
             // where中添加的condition为on condition
             onConditions.add(whereConditions.get(whereConditions.size() - 1));
             whereConditions.remove(whereConditions.size() - 1);
@@ -329,20 +331,20 @@ public class Listener extends SQLBaseListener{
     public void exitSelect_stmt(SQLParser.Select_stmtContext ctx) {
         Statement select_row;
 
-        if(syntaxErrorExceptions.isEmpty()){
+        if (syntaxErrorExceptions.isEmpty()) {
             boolean isDistinct = false;
-            if (ctx.K_DISTINCT() != null ){
+            if (ctx.K_DISTINCT() != null) {
                 isDistinct = true;
             }
 
-            ArrayList<ResultColumn> select_resultColumn = new ArrayList<>();	// select时返回类型
+            ArrayList<ResultColumn> select_resultColumn = new ArrayList<>();  // select时返回类型
             for (SQLParser.Result_columnContext result_columnContext : ctx.result_column()) {
-                if(result_columnContext.column_full_name() == null){
+                if (result_columnContext.column_full_name() == null) {
                     // all
                     select_resultColumn.add(new ResultColumn());
                 } else {
                     String table_name = "";
-                    if (result_columnContext.column_full_name().table_name() != null){
+                    if (result_columnContext.column_full_name().table_name() != null) {
                         table_name = result_columnContext.column_full_name().table_name().getText().toUpperCase();
                     }
                     select_resultColumn.add(
@@ -354,21 +356,20 @@ public class Listener extends SQLBaseListener{
             if (whereConditions.isEmpty()) // where为空
                 whereConditions.add(default_condition);
             ArrayList<String> table_name = new ArrayList<>();
-            if(ctx.table_query().getChildCount() > 1){
-                for(SQLParser.Table_nameContext table_nameContext : ctx.table_query().table_name()){
+            if (ctx.table_query().getChildCount() > 1) {
+                for (SQLParser.Table_nameContext table_nameContext : ctx.table_query().table_name()) {
                     table_name.add(table_nameContext.getText().toUpperCase());
                 }
                 select_row = new SelectJoinTableStatement(table_name, onConditions.get(0), whereConditions.get(0), select_resultColumn, isDistinct);
-            }
-            else{
+            } else {
                 table_name.add(ctx.table_query().getChild(0).getText().toUpperCase());
                 select_row = new SelectTableStatement(table_name.get(0), whereConditions.get(0), select_resultColumn, isDistinct);
             }
-        }else{
+        } else {
             select_row = new SelectTableStatement();
             select_row.setValid(false);
             StringBuilder msg = new StringBuilder();
-            for (SyntaxErrorException e : syntaxErrorExceptions){
+            for (SyntaxErrorException e : syntaxErrorExceptions) {
                 msg.append("; ").append(e.getMessage());
             }
             select_row.setMessage(msg.toString());
@@ -394,9 +395,9 @@ public class Listener extends SQLBaseListener{
     }
 
     @Override
-    public void enterCheckpoint_stmt(SQLParser.Checkpoint_stmtContext ctx) {
-//        super.enterCheckpoint_stmt(ctx);
-        CheckPointStatement checkPointStatement = new CheckPointStatement();
-        statements.add(checkPointStatement);
+    public void enterSavepoint_stmt(SQLParser.Savepoint_stmtContext ctx) {
+//        super.enterSavepoint_stmt(ctx);
+        SavePointStatement savePointStatement = new SavePointStatement();
+        statements.add(savePointStatement);
     }
 }
