@@ -571,6 +571,10 @@ public class Table implements Iterable<Row> {
 //    dataFile=new RandomAccessFile(tablePath+File.separator+oldfilename,"rw");
 //  }
 
+  public String getDatabaseName() {
+      return this.databaseName;
+  }
+
   @Override
   public String toString(){
     return this.tableName + " | " + this.columns.size();
