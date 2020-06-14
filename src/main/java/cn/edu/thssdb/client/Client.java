@@ -71,7 +71,7 @@ public class Client {
          * quit;*/
         // 空语句处理
         if(msg.equals("")){
-          println("empty statement!");
+          println("empty command!");
           continue;
         }
 
