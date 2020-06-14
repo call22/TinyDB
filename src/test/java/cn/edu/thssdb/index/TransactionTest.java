@@ -4,7 +4,11 @@ import cn.edu.thssdb.query.statement.*;
 import cn.edu.thssdb.schema.*;
 import cn.edu.thssdb.type.ColumnType;
 import javafx.scene.input.Mnemonic;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -54,8 +58,8 @@ public class TransactionTest {
     System.out.println("search: release read lock");
     System.out.println("result table: ");
     printTestTable(manager.getCurrentDB().selectTable("INSTRUCTOR"));
+    deleteDir("DBS");
   }
-
   public static void main(String[] args) throws InterruptedException, IOException {
     TransactionTest test = new TransactionTest();
     System.out.println("init table: ");
@@ -74,6 +78,29 @@ public class TransactionTest {
     }
     for (Row row : testTable) {
       System.out.print(row.toString() + '\n');
+    }
+  }
+
+  private static void deleteDir(String filePath) {
+    File file = new File(filePath);
+    if(!file.exists()){
+      return;
+    }
+    String[] list = file.list();
+    File temp = null;
+    String path = null;
+    for (String item:list) {
+      path = filePath + File.separator + item;
+      temp = new File(path);
+      if(temp.isFile()){
+        temp.delete();
+        continue;
+      }
+      if(temp.isDirectory()) {
+        deleteDir(path);
+        new File(path).delete();
+        continue;
+      }
     }
   }
 }

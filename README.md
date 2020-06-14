@@ -29,7 +29,7 @@ a tiny and naive database based on ThssDB.
 
 首先`Maven compile`: 
 
-​			`			Maven clean` `Maven compile`安装相关依赖
+​			`			Maven clean` `Maven install`安装相关依赖
 
 开始运行系统：
 

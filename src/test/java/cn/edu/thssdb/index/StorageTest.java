@@ -1,98 +1,107 @@
-//package cn.edu.thssdb.index;
-//
-//import cn.edu.thssdb.schema.Entry;
-//import cn.edu.thssdb.schema.Row;
-//import cn.edu.thssdb.schema.Table;
-//import cn.edu.thssdb.schema.Column;
-//import cn.edu.thssdb.type.ColumnType;
-//import javafx.util.Pair;
-//import org.junit.Test;
-//
-//import java.io.IOException;
-//
-//public class StorageTest {
-//  Column[] testColumnList = {
-//          new Column("id", ColumnType.INT, true, true, 0),
-//          new Column("name", ColumnType.STRING, false, true, 16)
-//  };
-//  Table testTable;
-//
-//  @Test
-//  public void setup() throws IOException {
-//    // 测试初始化与写入文件
-//    testTable = new Table("Test", "instructor", testColumnList);
-//    for (int i = 0; i < 5; i++) {
-//      Entry[] entries = {new Entry(i), new Entry("XiaoLi")};
-//      testTable.insert(new Row(entries));
-//    }
-//    testTable.serialize();
-//    System.out.println("测试初始化：");
-//    printTestTable();
-//    testDelete();
-//    testUpdate();
-//    testSearch();
-//    testTable.serialize();
-//    testTable.getRAF().close();;//为测试alter暂时添加。重建Table需要先关闭原有文件流，否则后续alter时文件会删除出错
-//    testRestore();
-//
-//    testAlterAdd();
-//    testAlterDrop();
-//    System.out.println("测试修改数据，更新id=3的age为25: ");
-//    Entry[] entries = {new Entry(3), new Entry(25)};
-//    testTable.update(new Row(entries));
-//    printTestTable();
-//
-//  }
-//  public void testAlterAdd() throws IOException {
-//    // 测试alterADD(age)：
-//    System.out.println("测试alterADD(age):");
-//    testTable.alterADD(new Column("age",ColumnType.INT,false,false,0));
-//
-//    //testTable.alterADD("age",ColumnType.INT);
-//    printTestTable();
-//  }
-//  public void testAlterDrop() throws IOException {
-//    // 测试alterADD(age)：
-//    System.out.println("测试alterDROP(name):");
-//    testTable.alterDrop("name".toUpperCase());
-//
-//    printTestTable();
-//  }
-//
-//  public void testSearch() throws IOException{
-//    // 测试读取数据，读取id为3的数据
-//    System.out.println("读取id=3的数据：\n" + testTable.search(new Entry(3)));
-//  }
-//
-//  public void testDelete() throws IOException {
-//    // 测试删除数据，删除id为2
-//    System.out.println("测试删除id=2：");
-//    Entry[] entries = {new Entry(2), new Entry("XiaoLi")};
-//    testTable.delete(new Row(entries));
-//    printTestTable();
-//  }
-//
-//  public void testUpdate() throws IOException{
-//    // 测试修改数据，更新id=3的名字为XiaoMing
-//    System.out.println("测试修改数据，更新id=3的名字为XiaoMing: ");
-//    Entry[] entries = {new Entry(3), new Entry("XiaoMing")};
-//    testTable.update(new Row(entries));
-//    printTestTable();
-//  }
-//
-//  public void testRestore() throws IOException {
-//    // 从文件重新载入table，结果需要与之前一致
-//    System.out.println("测试从文件重新载入table，结果需要与之前一致: ");
-//    testTable = new Table("Test", "instructor", testColumnList);
-//    printTestTable();
-//  }
-//
-//  public void printTestTable() {
-//    for(Column c:testTable.getColumns()){
-//      System.out.print(c.toString()+"\n");
-//    }
-//    for (Row row : testTable) {
-//      System.out.print(row.toString() + '\n');
-//    }
-//  }
-//}
+package cn.edu.thssdb.index;
+
+import cn.edu.thssdb.exception.KeyNotExistException;
+import cn.edu.thssdb.exception.SyntaxErrorException;
+import cn.edu.thssdb.schema.Entry;
+import cn.edu.thssdb.schema.Row;
+import cn.edu.thssdb.schema.Table;
+import cn.edu.thssdb.schema.Column;
+import cn.edu.thssdb.type.ColumnType;
+import javafx.util.Pair;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+import java.io.File;
+import java.io.IOException;
+
+import static org.junit.Assert.*;
+
+public class StorageTest {
+  private Column[] testColumnList = {
+          new Column("ID", ColumnType.INT, true, true, 0),
+          new Column("NAME", ColumnType.STRING, false, true, 16)
+  };
+  private Table testTable;
+  private BPlusTree<Entry, Row> checkTree;
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
+  @Before
+  public void setUp() {
+    try {
+      testTable = new Table("TEST", "INSTRUCTOR", testColumnList);
+    } catch (Exception e) {
+      System.out.println(e.getMessage());
+      throw new SyntaxErrorException(e.getMessage());
+    }
+    checkTree = new BPlusTree<>();
+  }
+  @Test
+  public void testInsertAndSearch() throws IOException {
+    for (int i = 0; i < 5; i++) {
+      Entry[] entries = {new Entry(i), new Entry("XiaoLi")};
+      testTable.insert(new Row(entries));
+      checkTree.put(new Entry(i), new Row(entries));
+      assertTrue(testTable.search(new Entry(i)).getEntries().equals(
+              checkTree.get(new Entry(i)).getEntries()));
+    }
+  }
+
+  @Test
+  public void testDelete() throws IOException {
+    testInsertAndSearch();
+    Entry[] entries = {new Entry(2), new Entry("XiaoLi")};
+    testTable.delete(new Row(entries));
+    checkTree.remove(new Entry(2));
+    thrown.expect(KeyNotExistException.class);
+    testTable.search(new Entry(2));
+  }
+  @Test
+  public void testUpdate() throws IOException {
+    testInsertAndSearch();
+    Entry[] entries = {new Entry(3), new Entry("XiaoMing")};
+    testTable.update(new Row(entries));
+    checkTree.update(new Entry(3), new Row(entries));
+    assertEquals(checkTree.get(new Entry(3)).getEntries(), testTable.search(new Entry(3)).getEntries());
+  }
+  @Test
+  public void testSerialAndDeserial() throws IOException {
+    testInsertAndSearch();
+    testTable.serializeIndex();
+    Table deserialTable = new Table("TEST", "INSTRUCTOR", testColumnList);
+    BPlusTreeIterator<Entry, Row> iterator = checkTree.iterator();
+    while (iterator.hasNext()) {
+      Pair<Entry, Row> pair = iterator.next();
+      assertEquals(pair.getValue().getEntries(), deserialTable.search(pair.getKey()).getEntries());
+    }
+  }
+  @After
+  public void cleanup(){
+    deleteDir("DBS");
+  }
+
+  private static void deleteDir(String filePath) {
+    File file = new File(filePath);
+    if(!file.exists()){
+      return;
+    }
+    String[] list = file.list();
+    File temp = null;
+    String path = null;
+    for (String item:list) {
+      path = filePath + File.separator + item;
+      temp = new File(path);
+      if(temp.isFile()){
+        temp.delete();
+        continue;
+      }
+      if(temp.isDirectory()) {
+        deleteDir(path);
+        new File(path).delete();
+        continue;
+      }
+    }
+  }
+}

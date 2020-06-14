@@ -5,7 +5,9 @@ import cn.edu.thssdb.schema.Entry;
 import cn.edu.thssdb.schema.Row;
 import cn.edu.thssdb.schema.Table;
 import cn.edu.thssdb.type.ColumnType;
+import org.junit.After;
 
+import java.io.File;
 import java.io.IOException;
 
 public class LockTest {
@@ -45,6 +47,7 @@ public class LockTest {
       }
     System.out.println(Thread.currentThread().getName() + " read end ");
     printTestTable();
+    deleteDir("DBS");
   }
 
 
@@ -57,13 +60,35 @@ public class LockTest {
     Thread.sleep(1000);
     thread2.start();
   }
-    public void printTestTable() {
-    for(Column c:testTable.getColumns()){
-      System.out.print(c.toString()+"\n");
+  public void printTestTable() {
+    for (Column c : testTable.getColumns()) {
+      System.out.print(c.toString() + "\n");
     }
     for (Row row : testTable) {
       System.out.print(row.toString() + '\n');
     }
   }
 
+  private static void deleteDir(String filePath) {
+    File file = new File(filePath);
+    if(!file.exists()){
+      return;
+    }
+    String[] list = file.list();
+    File temp = null;
+    String path = null;
+    for (String item:list) {
+      path = filePath + File.separator + item;
+      temp = new File(path);
+      if(temp.isFile()){
+        temp.delete();
+        continue;
+      }
+      if(temp.isDirectory()) {
+        deleteDir(path);
+        new File(path).delete();
+        continue;
+      }
+    }
+  }
 }
