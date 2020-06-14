@@ -79,6 +79,7 @@ public class IServiceHandler implements IService.Iface {
    * 报错信息在columnlist中传给client*/
   @Override
   public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
+
     ExecuteStatementResp resp = new ExecuteStatementResp();
     if(dbsManager.checkSessionId(req.sessionId)) {
       try {
@@ -86,6 +87,7 @@ public class IServiceHandler implements IService.Iface {
         System.out.println("get listener.");
         ArrayList<Statement> statements = listener.getStatements();
         resp.setStatus(new Status(Global.SUCCESS_CODE));
+
         for (Statement statement : statements) {
           Result result = statement.execute(dbsManager.getManager());
           if (statement.isValid()) {
@@ -126,7 +128,12 @@ public class IServiceHandler implements IService.Iface {
     ParseTree tree = null;
     try{
       tree = parser.parse();
+      System.out.println("aaaa:  " + tree.getText());
 
+      /**特殊情况, 开头不匹配, tree为空*/
+      if(tree.getText().equals("")){
+        throw new SyntaxErrorException( "'" + statement.split(" ")[0] + "'" + " syntax error.");
+      }
       if(LogManager.getIsTransaction()){
         LogManager.logList.add(statement);
       }else{
