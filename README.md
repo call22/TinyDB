@@ -27,9 +27,13 @@ a tiny and naive database based on ThssDB.
 
 #### 三、运行方式
 
-`Maven clean` `Maven install`安装相关依赖
+首先`Maven compile`: 
 
-依次运行`server/server`和`client/client`
+​			`			Maven clean` `Maven compile`安装相关依赖
+
+开始运行系统：
+
+​			依次运行`Server/Server.java`和`Client/Client.java`
 
 然后即可开始在client端操作。
 

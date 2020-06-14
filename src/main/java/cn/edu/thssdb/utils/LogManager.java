@@ -65,7 +65,6 @@ public class LogManager {
    * 写一条log
    */
   public static void writeLog(Manager manager) throws IOException {
-    System.out.println("writeLog:::::"+"\n");
 
     String dbname=manager.getCurrentDB().getName();
     String logPath=Global.dirPath +dbname+"/"+dbname+".log";
@@ -89,10 +88,8 @@ public class LogManager {
 
   }
   public static void writeSingleLog(Manager manager,String log) throws IOException {
-    System.out.println("writeSingleLog:::::"+log+"\n");
 
     String dbname=manager.getCurrentDB().getName();
-    System.out.println("getCurrentDB"+dbname+"\n");
     String logPath=Global.dirPath +dbname+"/"+dbname+".log";
     if(!new File(Global.dirPath +dbname).exists()){
       File f=new File(Global.dirPath +dbname);
@@ -106,7 +103,6 @@ public class LogManager {
     toLog.write(log+System.getProperty("line.separator"));
     toLog.flush();
     toLog.close();
-    System.out.println("aFtEr...writeSingleLog:::::"+log+"\n");
 
   }
 
@@ -115,9 +111,7 @@ public class LogManager {
     ArrayList<String> logList=readLog(db);
 
     for(String log:logList){
-      System.out.println("after readLog(db):"+log+"\n");
       String[] strings = log.split(" ");
-      System.out.println(strings[0]+"\n");
 
       if(strings[0].equals("insert") || strings[0].equals("delete") || strings[0].equals("update") ||(strings[0].equals("create") && strings[1].equals("table"))||(strings[0].equals("drop") && strings[1].equals("table"))){
         redo(manager,db,log);
@@ -139,8 +133,6 @@ public class LogManager {
       BufferedReader br=new BufferedReader(fromLog);
       String line="";
       while ((line=br.readLine())!=null) {
-//      System.out.println(line)
-//        String[] strings = line.split(" ");
         statements.add(line);
       }
       br.close();
@@ -169,7 +161,6 @@ public class LogManager {
   }
 
   public static void redo(Manager manager, Database db, String statement)  {
-    System.out.println(statement);
 
     manager.switchTempDatabase(db.getName());
     Listener listener = getListenerFromStatement(statement);
@@ -183,8 +174,6 @@ public class LogManager {
       }catch (RuntimeException e){
         System.out.println(e.getMessage());
       }
-
-
     }
   }
 
@@ -202,7 +191,6 @@ public class LogManager {
     try{
       tree = parser.parse();
     } catch (RuntimeException e){
-      System.out.println(e.getMessage());
       throw new SyntaxErrorException(e.getMessage());
     }
     Listener listener = new Listener();

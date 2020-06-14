@@ -84,7 +84,6 @@ public class IServiceHandler implements IService.Iface {
     if(dbsManager.checkSessionId(req.sessionId)) {
       try {
         Listener listener = getListenerFromStatement(req.statement);
-        System.out.println("get listener.");
         ArrayList<Statement> statements = listener.getStatements();
         resp.setStatus(new Status(Global.SUCCESS_CODE));
 
@@ -94,24 +93,20 @@ public class IServiceHandler implements IService.Iface {
             resp.setColumnsList(result.getStringColumns());
             resp.setRowList(result.getStringRows());
           } else {
-            System.out.println("execute error.");
             resp.setStatus(new Status(Global.RUN_ERROR_CODE));
             resp.setColumnsList(result.getStringRows().get(0));
             break;
           }
         }
       } catch (SyntaxErrorException e) {
-        System.out.println(e.getMessage());
         resp.setStatus(new Status(Global.PARSE_ERROR_CODE));
         resp.setColumnsList(new ArrayList<>(Collections.singletonList(e.getMessage())));
       } catch (RuntimeException e) {
-        System.out.println(e.getMessage());
         resp.setStatus(new Status(Global.RUN_ERROR_CODE));
         resp.setColumnsList(new ArrayList<>(Collections.singletonList(e.getMessage())));
       }
     }
     else {
-      System.out.println("need login.");
       resp.setStatus(new Status(Global.NEED_LOGIN_CODE));
       resp.setHasResult(false);
     }
@@ -128,7 +123,6 @@ public class IServiceHandler implements IService.Iface {
     ParseTree tree = null;
     try{
       tree = parser.parse();
-      System.out.println("aaaa:  " + tree.getText());
 
       /**特殊情况, 开头不匹配, tree为空*/
       if(tree.getText().equals("")){
@@ -141,11 +135,8 @@ public class IServiceHandler implements IService.Iface {
       }
 
 
-    } catch (RuntimeException e){
-      System.out.println(e.getMessage());
+    } catch (RuntimeException | IOException e){
       throw new SyntaxErrorException(e.getMessage());
-    }catch (IOException e){
-      System.out.println(e.getMessage());
     }
     Listener listener = new Listener();
     ParseTreeWalker.DEFAULT.walk(listener, tree);
