@@ -52,7 +52,7 @@ void executeStatement(String msg, Long sessionId)
 
 用B+树做记录的索引，key为entry，叶子节点的value记录对应的row在数据文件中的位置指针。
 
-![图片](https://uploader.shimo.im/f/dz0dOw7yYvlh3bRW.png!thumbnail)
+<img src='https://uploader.shimo.im/f/dz0dOw7yYvlh3bRW.png!thumbnail' width=70% align=center/>
 
 #### 3.2序列化与反序列化
 
@@ -99,7 +99,7 @@ void executeStatement(String msg, Long sessionId)
 
 * 测试结果 - schema : (id: int, name: string, primarykey(id))
 
-  ![图片](https://uploader.shimo.im/f/JoMoMFE5DQ8c9ed3.png!thumbnail)
+  <img src='https://uploader.shimo.im/f/JoMoMFE5DQ8c9ed3.png!thumbnail' width=30% align=left/>
 ### 四、元数据管理模块
 
 #### 4.1基本思路
@@ -386,7 +386,7 @@ isDistinct  是否去重
 
 ##### 3.测试结果
 
-![图片](https://uploader.shimo.im/f/RJ4Gxv2xEH05LEoi.png!thumbnail)
+<img src='https://images-cdn.shimo.im/RJ4Gxv2xEH05LEoi.png__thumbnail' width=30% align=left/>
 
 如图所示，初始表为空，并开启两个线程
 
@@ -433,6 +433,14 @@ isDistinct  是否去重
 | 优化后   | 109   | 62   | 100   | 90.33   |
 
 * select时支持distinct语句
-* checkpoint持久化
+
+使用助教提供的数据库
+
+|            | 语句                                                       | row个数 |
+| ---------- | ---------------------------------------------------------- | ------- |
+| 无distinct | select dept_name from student where tot_cred > 0;          | 1980    |
+| 有distinct | select distinct dept_name from student where tot_cred > 0; | 20      |
+
+* checkpoints持久化
 
 将.log中内容持久化到硬盘

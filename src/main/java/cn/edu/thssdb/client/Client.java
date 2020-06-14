@@ -201,6 +201,9 @@ public class Client {
             print(String.join(" | ", row));
             println(" |");
           }
+
+          // 统计个数
+          println(String.valueOf(resp.getRowList().size()));
         }
       } catch (TException e) {
         logger.error(e.getMessage());

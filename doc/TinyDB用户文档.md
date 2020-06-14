@@ -130,10 +130,10 @@ begin transaction;
 ```plain
 commit;
 ```
-##### 3.5.3checkpoint
+##### 3.5.3checkpoints
 
 ```plain
-checkpoint;
+checkpoints;
 ```
 * 保证截止到目前为止的操作不会丢失。
 ##### 3.5.4恢复
